@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECCore", "ECCore\ECCore.csproj", "{A4D6988A-1B1F-4CDF-988F-E0D6832B412C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECCore.Processes", "ECCore.Processes\ECCore.Processes.csproj", "{A897B4C3-5690-4D19-9BFB-44E5702A3F19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{A4D6988A-1B1F-4CDF-988F-E0D6832B412C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4D6988A-1B1F-4CDF-988F-E0D6832B412C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4D6988A-1B1F-4CDF-988F-E0D6832B412C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A897B4C3-5690-4D19-9BFB-44E5702A3F19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A897B4C3-5690-4D19-9BFB-44E5702A3F19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A897B4C3-5690-4D19-9BFB-44E5702A3F19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A897B4C3-5690-4D19-9BFB-44E5702A3F19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
