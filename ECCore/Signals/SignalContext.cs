@@ -12,10 +12,15 @@ public class SignalContext<TSignal>
 	where TSignal : Signal
 {
 
+#if NET6_0_OR_GREATER
 	public Func<TSignal, Task>? onRaisedAsync;
 	public Action<TSignal>? onRaised;
+#else
+    public Func<TSignal, Task> onRaisedAsync;
+    public Action<TSignal> onRaised;
+#endif
 
-	public Task Raise(TSignal signal)
+    public Task Raise(TSignal signal)
 	{
 		onRaised?.Invoke(signal);
 		return onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;

@@ -8,12 +8,16 @@ using System.Reflection;
 public abstract partial class Component
 {
 
+#if NET6_0_OR_GREATER
+	public Entity? Parent { get; internal set; }
+#else
     public Entity Parent { get; internal set; }
+#endif
 
-	/// <summary>
-	/// Initialise this component and register the appropriate signals.
-	/// </summary>
-	protected internal abstract void Initialise();
+    /// <summary>
+    /// Initialise this component and register the appropriate signals.
+    /// </summary>
+    protected internal abstract void Initialise();
 
 	internal void Remove()
 	{

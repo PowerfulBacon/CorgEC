@@ -100,8 +100,12 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		throw new Exception("Could not add the created component to the entity.");
 	}
 
+#if NET6_0_OR_GREATER
 	public bool TryGetComponent<T>(out T? component)
-		where T : Component
+#else
+    public bool TryGetComponent<T>(out T component)
+#endif
+        where T : Component
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -120,6 +124,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 			.Single();
 	}
 
+#if NET6_0_OR_GREATER
 	public bool TryGetComponent(Type componentType, out Component? component, bool allowSubtypes = true)
 	{
 		if (Destroyed)
@@ -129,14 +134,25 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 			.SingleOrDefault();
 		return component != default;
 	}
+#else
+	public bool TryGetComponent(Type componentType, out Component component, bool allowSubtypes = true)
+	{
+		if (Destroyed)
+			throw new NullReferenceException("Attempting to access a destroyed entity.");
+		component = components
+			.Where(x => allowSubtypes ? componentType.IsAssignableFrom(x.GetType()) : x.GetType() == componentType)
+			.SingleOrDefault();
+		return component != default;
+	}
+#endif
 
-	/// <summary>
-	/// Try to add a component to this entity, returns false if the component could not
-	/// be added due to duplication rules.
-	/// </summary>
-	/// <param name="component"></param>
-	/// <returns>Returns true if the component was added to the entity.</returns>
-	public bool TryAddComponent(Component component)
+    /// <summary>
+    /// Try to add a component to this entity, returns false if the component could not
+    /// be added due to duplication rules.
+    /// </summary>
+    /// <param name="component"></param>
+    /// <returns>Returns true if the component was added to the entity.</returns>
+    public bool TryAddComponent(Component component)
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -199,10 +215,11 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 			component.Remove();
 	}
 
-	#endregion
+#endregion
 
 	#region Entity Contents
 
+#if NET6_0_OR_GREATER
 	/// <summary>
 	/// A nullable list of entities that are stored
 	/// inside of this entity.
@@ -210,8 +227,17 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	private List<Entity>? Contents = null;
 
 	public Entity? Location { get; private set; }
+#else
+	/// <summary>
+	/// A nullable list of entities that are stored
+	/// inside of this entity.
+	/// </summary>
+	private List<Entity> Contents = null;
 
-	public void Move(Entity newEntity)
+	public Entity Location { get; private set; }
+#endif
+
+    public void Move(Entity newEntity)
 	{
 		if (Equals(newEntity))
 			throw new Exception("Cannot move entity inside of itself.");
@@ -263,7 +289,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 			yield return entity;
 	}
 
-	#endregion
+#endregion
 
 	#region Operators
 
@@ -289,6 +315,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		return other;
 	}
 
+#if NET6_0_OR_GREATER
 	public static bool operator ==(Entity? entity, object? other)
 	{
 		if (entity is null)
@@ -319,8 +346,40 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	{
 		return base.Equals(obj);
 	}
+#else
+    public static bool operator ==(Entity entity, object other)
+    {
+        if (entity is null)
+        {
+            if (other is Entity otherEntity)
+                return otherEntity.Destroyed;
+            return other is null;
+        }
+        if (!(other is Entity))
+        {
+            if (other is null && entity.Destroyed)
+                return true;
+            return false;
+        }
+        if (other is null)
+            return entity.Destroyed;
+        if (entity.Destroyed && ((Entity)other).Destroyed)
+            return true;
+        return entity.Equals(other);
+    }
 
-	public override int GetHashCode()
+    public static bool operator !=(Entity entity, object other)
+    {
+        return !(entity == other);
+    }
+
+    public override bool Equals(object obj)
+    {
+        return base.Equals(obj);
+    }
+#endif
+
+    public override int GetHashCode()
 	{
 		return base.GetHashCode();
 	}
