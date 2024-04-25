@@ -31,6 +31,17 @@ namespace ECCore.Processes.Tests
             Assert.IsTrue(results.fired);
         }
 
+        [TestMethod]
+        public void TestNoFire()
+        {
+            TestResults results = new TestResults();
+            ProcessManager manager = ProcessManager.FromBuilder()
+                .WithService(new DontFire(results))
+                .Build();
+            manager.Fire();
+            Assert.IsFalse(results.fired);
+        }
+
     }
 
     public class TestResults
@@ -61,6 +72,15 @@ namespace ECCore.Processes.Tests
         {
             testResults.fired = true;
         }
+    }
+
+    public class DontFire : ExampleProcess
+    {
+        public DontFire(TestResults testResults) : base(testResults)
+        {
+        }
+
+        protected override ECProcessFlags Flags => ECProcessFlags.NO_FIRE;
     }
 
 }
