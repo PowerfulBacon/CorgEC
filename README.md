@@ -2,6 +2,10 @@
 
 A lightweight EC library for C#.
 
+Currently in development:
+- Processes
+- Fully transparent networking capabilities
+
 # Components
 
 ## Creating a component
