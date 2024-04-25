@@ -7,6 +7,10 @@ namespace ECCore.Processes
     public enum ECProcessFlags
     {
         /// <summary>
+        /// No flags
+        /// </summary>
+        NONE = 0,
+        /// <summary>
         /// This process runs in real time rather than tick time, meaning that if
         /// it took 52ms since the last time it fired, that number will be passed instead
         /// of the tick delay.

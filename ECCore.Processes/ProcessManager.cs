@@ -43,6 +43,16 @@ namespace ECCore.Processes
         /// </summary>
         private ECProcess[] RunningSystems;
 
+        internal ProcessManager(ECProcess[] systems)
+        {
+            this.RunningSystems = systems;
+        }
+
+        public static ProcessManagerBuilder FromBuilder()
+        {
+            return new ProcessManagerBuilder();
+        }
+
         /// <summary>
         /// Fire the process manager and trigger any updates that need to be
         /// performed.
@@ -55,15 +65,28 @@ namespace ECCore.Processes
         {
             // Time spent running application blackbox
             TimeSpan timeSinceLastTick = lastFire != null ? DateTime.Now - lastFire.Value : TimeSpan.Zero;
+            Fire(timeSinceLastTick);
+        }
+
+        /// <summary>
+        /// Fire the process manager and trigger any updates that need to be
+        /// performed.
+        /// Handles lag mitigation by scheduling things to keep the tick length
+        /// below what we requested to prevent overtime.
+        /// If we have too much to process, then we need to choose how we slow down
+        /// all that processing and reduce the tick speed.
+        /// </summary>
+        /// <param name="elapsedTime">Manually override the elapsed time, to perform testing or provide custom time calculations.</param>
+        public void Fire(TimeSpan elapsedTime)
+        {
             // Determine how long we can run for
             // If it took 20ms since our last tick, we can run for 30ms
-            TimeSpan allowedExecutionTime = TickRate - timeSinceLastTick;
+            TimeSpan allowedExecutionTime = TickRate - elapsedTime;
             // Determine if we need to enter overtime
             if (allowedExecutionTime < OvertimeAmount)
             {
                 allowedExecutionTime = OvertimeAmount;
             }
-
         }
 
     }
