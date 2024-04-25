@@ -45,7 +45,7 @@ namespace ECCore.Processes
 
         internal ProcessManager(ECProcess[] systems)
         {
-            this.RunningSystems = systems;
+            RunningSystems = systems;
         }
 
         public static ProcessManagerBuilder FromBuilder()
@@ -87,6 +87,22 @@ namespace ECCore.Processes
             {
                 allowedExecutionTime = OvertimeAmount;
             }
+            Fire(elapsedTime, allowedExecutionTime);
+        }
+
+        /// <summary>
+        /// Fire the process manager and trigger any updates that need to be
+        /// performed.
+        /// Handles lag mitigation by scheduling things to keep the tick length
+        /// below what we requested to prevent overtime.
+        /// If we have too much to process, then we need to choose how we slow down
+        /// all that processing and reduce the tick speed.
+        /// </summary>
+        /// <param name="elapsedTime">Manually override the elapsed time, to perform testing or provide custom time calculations.</param>
+        /// <param name="executionTimeAllowed">The amount of time allowed for processes to execute.</param>
+        public void Fire(TimeSpan elapsedTime, TimeSpan executionTimeAllowed)
+        {
+
         }
 
     }
