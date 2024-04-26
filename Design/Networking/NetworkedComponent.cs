@@ -25,7 +25,7 @@ public class ClientExample : Component
             // Signal handler here
         });
     }
-
+    
 }
 
 public class ServerExample : Component

@@ -1,3 +1,4 @@
+using ECCore.Components;
 using ECSCore.Signals;
 using System;
 using System.Collections;
@@ -56,7 +57,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 
 	#region Components
 
-	private List<Component> components = new List<Component>();
+	private List<IComponent> components = new List<IComponent>();
 
 	/// <summary>
 	/// The components, implemented as a list as we shouldn't need to get components
@@ -64,10 +65,10 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	/// Use the [Dependency] attribute if you need to frequently interface with another specific
 	/// component.
 	/// </summary>
-	public IReadOnlyList<Component> Components => components;
+	public IReadOnlyList<IComponent> Components => components;
 
 	public bool HasComponent<T>()
-        where T : Component
+        where T : Component<T>
     {
         return components
             .Where(x => x.GetType() == typeof(T))
@@ -75,7 +76,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
     }
 
 	public T GetComponent<T>()
-		where T : Component
+		where T : Component<T>
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -85,7 +86,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	}
 
 	public T GetOrAddComponent<T>(Func<T> componentCreator)
-		where T : Component
+		where T : Component<T>
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -105,7 +106,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 #else
     public bool TryGetComponent<T>(out T component)
 #endif
-        where T : Component
+        where T : Component<T>
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -115,7 +116,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		return component != default;
 	}
 
-	public Component GetComponent(Type componentType)
+	public IComponent GetComponent(Type componentType)
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -125,7 +126,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	}
 
 #if NET6_0_OR_GREATER
-	public bool TryGetComponent(Type componentType, out Component? component, bool allowSubtypes = true)
+	public bool TryGetComponent(Type componentType, out IComponent? component, bool allowSubtypes = true)
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -135,7 +136,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		return component != default;
 	}
 #else
-	public bool TryGetComponent(Type componentType, out Component component, bool allowSubtypes = true)
+	public bool TryGetComponent(Type componentType, out IComponent component, bool allowSubtypes = true)
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -152,7 +153,7 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
     /// </summary>
     /// <param name="component"></param>
     /// <returns>Returns true if the component was added to the entity.</returns>
-    public bool TryAddComponent(Component component)
+    public bool TryAddComponent(IComponent component)
 	{
 		if (Destroyed)
 			throw new NullReferenceException("Attempting to access a destroyed entity.");
@@ -161,8 +162,8 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 			try
 			{
 				component.Parent = this;
-				component.SetupDependencies();
-				component.Initialise();
+				component._SetupDependencies();
+				component._Initialise();
 				components.Add(component);
 				return true;
 			}
@@ -179,12 +180,12 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		}
 	}
 
-	public bool RemoveComponent(Component component)
+	public bool RemoveComponent(IComponent component)
     {
         if (Destroyed)
             throw new NullReferenceException("Attempting to access a destroyed entity.");
 		components.Remove(component);
-		component.Remove();
+		component._Remove();
 		return true;
     }
 
@@ -198,21 +199,21 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	internal bool ValidateComponents()
 	{
 		return Components
-			.All(component => component.SetupDependencies());
+			.All(component => component._SetupDependencies());
 	}
 
 	internal void InitialiseComponents()
 	{
-		foreach (Component component in Components)
-			component.Initialise();
+		foreach (IComponent component in Components)
+			component._Initialise();
 	}
 
 	internal void RemoveComponents()
 	{
 		var componentList = Components.ToList();
 		components.Clear();
-		foreach (Component component in componentList)
-			component.Remove();
+		foreach (IComponent component in componentList)
+			component._Remove();
 	}
 
 #endregion

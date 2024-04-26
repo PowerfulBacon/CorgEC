@@ -4,72 +4,75 @@ using System.Reflection;
 using System;
 using System.Linq;
 
-public abstract partial class Component
+namespace ECCore.Components
 {
+	public abstract partial class Component<TSelf> : IComponent
+		where TSelf : Component<TSelf>
+	{
 
-	/// <summary>
-	/// Cache of the component type to the dependency.
-	/// </summary>
-	private static ConcurrentDictionary<Type, IEnumerable<(DependencyAttribute attribute, ISharedDependency dependency)>> DependencyCache
-		= new ConcurrentDictionary<Type, IEnumerable<(DependencyAttribute attribute, ISharedDependency dependency)>>();
+		/// <summary>
+		/// Cache of the component type to the dependency.
+		/// </summary>
+		private static ConcurrentDictionary<Type, IEnumerable<(DependencyAttribute attribute, ISharedDependency dependency)>> DependencyCache
+			= new ConcurrentDictionary<Type, IEnumerable<(DependencyAttribute attribute, ISharedDependency dependency)>>();
 
 #if NET6_0_OR_GREATER
-	/// <summary>
-	/// Sets up the dependencies for this component, must be called before
-	/// the component is ready to use.
-	/// Dependencies allow for direct function calls between 2 different components,
-	/// for cases where you may need exactly 1 call, rather than the 0 to many calls
-	/// that signals offer.
-	/// </summary>
-	/// <returns></returns>
-	internal bool SetupDependencies()
-	{
-		if (Parent == null)
-			throw new InvalidOperationException("Cannot setup dependencies on a component that has no parent.");
-		// Try to access the dependency cache, or build it
-		if (!DependencyCache.TryGetValue(GetType(), out var dependencies))
+		/// <summary>
+		/// Sets up the dependencies for this component, must be called before
+		/// the component is ready to use.
+		/// Dependencies allow for direct function calls between 2 different components,
+		/// for cases where you may need exactly 1 call, rather than the 0 to many calls
+		/// that signals offer.
+		/// </summary>
+		/// <returns></returns>
+		bool IComponent._SetupDependencies()
 		{
-			dependencies = GetType()
-				.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-				.Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(Component).IsAssignableFrom(x.FieldType))
-				.Select(x => (x.GetCustomAttribute<DependencyAttribute>()!, (ISharedDependency)new FieldDependency(x)))
-				.Union(
-					GetType()
-						.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-						.Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(Component).IsAssignableFrom(x.PropertyType))
-						.Select(x => (x.GetCustomAttribute<DependencyAttribute>()!, (ISharedDependency)new PropertyDependency(x)))
-				);
-			DependencyCache.TryAdd(GetType(), dependencies);
-		}
-		bool valid = true;
-		// Now that we have our dependencies, set them up
-		foreach (var dep in dependencies)
-		{
-			var dependency = dep.dependency;
-            // Try to locate the component, or error
-            if (Parent.TryGetComponent(dependency.dependencyType, out var located))
+			if (Parent == null)
+				throw new InvalidOperationException("Cannot setup dependencies on a component that has no parent.");
+			// Try to access the dependency cache, or build it
+			if (!DependencyCache.TryGetValue(GetType(), out var dependencies))
 			{
-				dependency.Set(this, located!);
+				dependencies = GetType()
+					.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+					.Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(IComponent).IsAssignableFrom(x.FieldType))
+					.Select(x => (x.GetCustomAttribute<DependencyAttribute>()!, (ISharedDependency)new FieldDependency(x)))
+					.Union(
+						GetType()
+							.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+							.Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(IComponent).IsAssignableFrom(x.PropertyType))
+							.Select(x => (x.GetCustomAttribute<DependencyAttribute>()!, (ISharedDependency)new PropertyDependency(x)))
+					);
+				DependencyCache.TryAdd(GetType(), dependencies);
 			}
-			else if (!(dep.attribute.Optional && dep.dependency.Nullable))
+			bool valid = true;
+			// Now that we have our dependencies, set them up
+			foreach (var dep in dependencies)
 			{
-				// Failed to fetch the required dependency, throw a warning and add it
-				valid = false;
-				// We might fail to add the component, in which case I have no idea what to do
-				Component? createdComponent = Activator.CreateInstance(dependency.dependencyType, new object[] { Parent }) as Component;
-				if (createdComponent != null && Parent.TryAddComponent(createdComponent))
+				var dependency = dep.dependency;
+				// Try to locate the component, or error
+				if (Parent.TryGetComponent(dependency.dependencyType, out var located))
 				{
-					dependency.Set(this, createdComponent);
+					dependency.Set(this, located!);
 				}
-				else
+				else if (!(dep.attribute.Optional && dep.dependency.Nullable))
 				{
-					throw new Exception($"Unable to setup the dependencies for the component {GetType()} as it dependency on a component that was not found and could not be added ({dependency.dependencyType}). We could not create the new component, causing a panic.");
+					// Failed to fetch the required dependency, throw a warning and add it
+					valid = false;
+					// We might fail to add the component, in which case I have no idea what to do
+					IComponent? createdComponent = Activator.CreateInstance(dependency.dependencyType, new object[] { Parent }) as IComponent;
+					if (createdComponent != null && Parent.TryAddComponent(createdComponent))
+					{
+						dependency.Set(this, createdComponent);
+					}
+					else
+					{
+						throw new Exception($"Unable to setup the dependencies for the component {GetType()} as it dependency on a component that was not found and could not be added ({dependency.dependencyType}). We could not create the new component, causing a panic.");
+					}
 				}
 			}
+			// Return if we setup the dependencies in a valid manner or not.
+			return valid;
 		}
-		// Return if we setup the dependencies in a valid manner or not.
-		return valid;
-	}
 #else
     /// <summary>
     /// Sets up the dependencies for this component, must be called before
@@ -79,19 +82,19 @@ public abstract partial class Component
     /// that signals offer.
     /// </summary>
     /// <returns></returns>
-    internal bool SetupDependencies()
+    bool IComponent._SetupDependencies()
     {
         // Try to access the dependency cache, or build it
         if (!DependencyCache.TryGetValue(GetType(), out var dependencies))
         {
             dependencies = GetType()
                 .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(Component).IsAssignableFrom(x.FieldType))
+                .Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(IComponent).IsAssignableFrom(x.FieldType))
                 .Select(x => (x.GetCustomAttribute<DependencyAttribute>(), (ISharedDependency)new FieldDependency(x)))
                 .Union(
                     GetType()
                         .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                        .Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(Component).IsAssignableFrom(x.PropertyType))
+                        .Where(x => x.GetCustomAttribute<DependencyAttribute>() != null && typeof(IComponent).IsAssignableFrom(x.PropertyType))
                         .Select(x => (x.GetCustomAttribute<DependencyAttribute>(), (ISharedDependency)new PropertyDependency(x)))
                 );
             DependencyCache.TryAdd(GetType(), dependencies);
@@ -111,7 +114,7 @@ public abstract partial class Component
                 // Failed to fetch the required dependency, throw a warning and add it
                 valid = false;
                 // We might fail to add the component, in which case I have no idea what to do
-                Component createdComponent = Activator.CreateInstance(dependency.dependencyType, new object[] { Parent }) as Component;
+                IComponent createdComponent = Activator.CreateInstance(dependency.dependencyType, new object[] { Parent }) as IComponent;
                 if (createdComponent != null && Parent.TryAddComponent(createdComponent))
                 {
                     dependency.Set(this, createdComponent);
@@ -127,61 +130,63 @@ public abstract partial class Component
     }
 #endif
 
-    private interface ISharedDependency
-	{
-		Type dependencyType { get; }
-		bool Nullable { get; }
-		void Set(Component source, Component value);
-	}
-
-	private class FieldDependency : ISharedDependency
-	{
-		public FieldInfo fieldInfo;
-
-		public FieldDependency(FieldInfo fieldInfo)
+		private interface ISharedDependency
 		{
-			this.fieldInfo = fieldInfo;
-            dependencyType = fieldInfo.FieldType;
-			if (typeof(Nullable<>).IsAssignableFrom(dependencyType))
+			Type dependencyType { get; }
+			bool Nullable { get; }
+			void Set(IComponent source, IComponent value);
+		}
+
+		private class FieldDependency : ISharedDependency
+		{
+			public FieldInfo fieldInfo;
+
+			public FieldDependency(FieldInfo fieldInfo)
 			{
-				Nullable = true;
-				dependencyType = dependencyType.GenericTypeArguments[0];
-            }
-        }
+				this.fieldInfo = fieldInfo;
+				dependencyType = fieldInfo.FieldType;
+				if (typeof(Nullable<>).IsAssignableFrom(dependencyType))
+				{
+					Nullable = true;
+					dependencyType = dependencyType.GenericTypeArguments[0];
+				}
+			}
 
-		public Type dependencyType { get; }
+			public Type dependencyType { get; }
 
-		public bool Nullable { get; }
+			public bool Nullable { get; }
 
-		public void Set(Component source, Component value)
-		{
-			fieldInfo.SetValue(source, value);
+			public void Set(IComponent source, IComponent value)
+			{
+				fieldInfo.SetValue(source, value);
+			}
 		}
-	}
 
-	private class PropertyDependency : ISharedDependency
-	{
-		public PropertyInfo propertyInfo;
-
-		public PropertyDependency(PropertyInfo propertyInfo)
+		private class PropertyDependency : ISharedDependency
 		{
-			this.propertyInfo = propertyInfo;
-            dependencyType = propertyInfo.PropertyType;
-            if (typeof(Nullable<>).IsAssignableFrom(dependencyType))
-            {
-                Nullable = true;
-                dependencyType = dependencyType.GenericTypeArguments[0];
-            }
-        }
+			public PropertyInfo propertyInfo;
 
-		public Type dependencyType { get; }
+			public PropertyDependency(PropertyInfo propertyInfo)
+			{
+				this.propertyInfo = propertyInfo;
+				dependencyType = propertyInfo.PropertyType;
+				if (typeof(Nullable<>).IsAssignableFrom(dependencyType))
+				{
+					Nullable = true;
+					dependencyType = dependencyType.GenericTypeArguments[0];
+				}
+			}
 
-        public bool Nullable { get; }
+			public Type dependencyType { get; }
 
-        public void Set(Component source, Component value)
-		{
-			propertyInfo.SetValue(source, value);
+			public bool Nullable { get; }
+
+			public void Set(IComponent source, IComponent value)
+			{
+				propertyInfo.SetValue(source, value);
+			}
 		}
+
 	}
 
 }
