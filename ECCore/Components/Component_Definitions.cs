@@ -20,11 +20,6 @@ namespace ECCore.Components
 		public Entity Parent { get => ((IComponent)this).Parent; internal set => ((IComponent)this).Parent = value; }
 #endif
 
-		/// <summary>
-		/// Does this component require the entity to be owned in order to run?
-		/// </summary>
-		public static bool RequiresOwnership = typeof(TSelf).GetCustomAttribute(typeof(RequiresOwnershipAttribute)) != null;
-
 		void IComponent._Initialise()
 		{
 			Initialise();
