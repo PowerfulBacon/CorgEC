@@ -12,6 +12,9 @@ namespace ECCore.Components
 		{
 			if (Parent == null)
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
+			// TODO: Should we be doing this at the signal registrar level instead of the entity level?
+			//		 That would imply that signals registrars all need to have the concept of ownership.
+			//		 oh yea btw, entities that are fully local should be owned by the local concept and not communicated
 			// Cases:
 			// Server Component, Server Signal:
 			//		Register normally

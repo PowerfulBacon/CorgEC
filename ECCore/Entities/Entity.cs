@@ -16,15 +16,11 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	public bool Initialized { get; private set; } = false;
 	public bool Destroyed { get; private set; } = false;
 
-	public Instance Instance { get; }
-
     /// <summary>
     /// Needs to be created via helpers
     /// </summary>
-    protected Entity(Instance instance)
-	{
-		Instance = instance;
-	}
+    protected Entity(Instance instance) : base(instance)
+	{ }
 
 	/// <summary>
 	/// Create a new entity, adding any components that we need to add to it in the
