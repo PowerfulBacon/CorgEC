@@ -1,6 +1,8 @@
 
+using ECCore.Attributes;
 using ECSCore.Signals;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -8,8 +10,8 @@ using System.Threading.Tasks;
 /// Per-entity singleton
 /// </summary>
 /// <typeparam name="TSignal"></typeparam>
-public class SignalContext<TSignal>
-	where TSignal : Signal
+public class SignalContext<TSignal> : ISignalRaiseContext<TSignal>
+    where TSignal : Signal<TSignal>
 {
 
 #if NET6_0_OR_GREATER
@@ -21,19 +23,19 @@ public class SignalContext<TSignal>
 #endif
 
     public Task Raise(TSignal signal)
-	{
-		onRaised?.Invoke(signal);
-		return onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;
-	}
+    {
+        onRaised?.Invoke(signal);
+        return onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;
+    }
 
-	internal void Register(Func<TSignal, Task> action)
-	{
-		onRaisedAsync += action;
-	}
+    internal void Register(Func<TSignal, Task> action)
+    {
+        onRaisedAsync += action;
+    }
 
-	internal void Register(Action<TSignal> action)
-	{
-		onRaised += action;
-	}
+    internal void Register(Action<TSignal> action)
+    {
+        onRaised += action;
+    }
 
 }

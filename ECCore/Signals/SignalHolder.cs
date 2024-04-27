@@ -14,8 +14,8 @@ namespace ECSCore.Signals
 		private Dictionary<Type, object> signalContexts = new Dictionary<Type, object>();
 
 		public SignalContext<TSignal> GetSignalContext<TSignal>()
-			where TSignal : Signal
-		{
+			where TSignal : Signal<TSignal>
+        {
 			if (signalContexts.TryGetValue(typeof(TSignal), out var result))
 				return (SignalContext<TSignal>)result;
 			SignalContext<TSignal> signalContext = new SignalContext<TSignal>();

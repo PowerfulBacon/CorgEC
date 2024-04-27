@@ -1,4 +1,5 @@
 using ECCore.Attributes;
+using ECCore.Instances;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -19,6 +20,8 @@ namespace ECCore.Components
 		Entity IComponent.Parent { get; set; }
 		public Entity Parent { get => ((IComponent)this).Parent; internal set => ((IComponent)this).Parent = value; }
 #endif
+
+		public Instance Instance => Parent?.Instance ?? throw new NullReferenceException("Attempting to access the instance of a component that has been disconnected from the world.");
 
 		void IComponent._Initialise()
 		{

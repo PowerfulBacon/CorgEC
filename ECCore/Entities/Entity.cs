@@ -1,4 +1,5 @@
 using ECCore.Components;
+using ECCore.Instances;
 using ECSCore.Signals;
 using System;
 using System.Collections;
@@ -15,11 +16,15 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	public bool Initialized { get; private set; } = false;
 	public bool Destroyed { get; private set; } = false;
 
+	public Instance Instance { get; }
+
     /// <summary>
     /// Needs to be created via helpers
     /// </summary>
-    protected Entity()
-	{ }
+    protected Entity(Instance instance)
+	{
+		Instance = instance;
+	}
 
 	/// <summary>
 	/// Create a new entity, adding any components that we need to add to it in the
@@ -27,9 +32,9 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 	/// </summary>
 	/// <param name="entityCreation"></param>
 	/// <returns></returns>
-	public static Entity Create(Action<Entity> entityCreation)
+	public static Entity Create(Instance instance, Action<Entity> entityCreation)
 	{
-		Entity entity = new Entity();
+		Entity entity = new Entity(instance);
 		entityCreation?.Invoke(entity);
 		entity.Initialise();
 		return entity;
@@ -55,9 +60,18 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		Destroyed = true;
 	}
 
-	#region Components
+	#region Ownership
 
-	private List<IComponent> components = new List<IComponent>();
+	public bool IsLocalOwner()
+	{
+		return true;
+	}
+
+    #endregion
+
+    #region Components
+
+    private List<IComponent> components = new List<IComponent>();
 
 	/// <summary>
 	/// The components, implemented as a list as we shouldn't need to get components

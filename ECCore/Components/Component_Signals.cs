@@ -8,29 +8,66 @@ namespace ECCore.Components
 	{
 
 		protected void Register<TSignal>(Action<TSignal> onSignalRaised)
-			where TSignal : Signal
+			where TSignal : Signal<TSignal>
 		{
 			if (Parent == null)
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
-			var signalContext = Parent.GetSignalContext<TSignal>();
-			signalContext.Register(onSignalRaised);
+			// Cases:
+			// Server Component, Server Signal:
+			//		Register normally
+			// Client Component, Client Signal:
+			//		Register normally
+			// Client Component, Server Signal:
+			//		Server sends the signal to the client that should handle this signal.
+			//		As the server, we need to ensure that we are still listening to this signal so that we can relay
+			//		it to the client.
+			//		As a client, we we handle this signal normally.
+			// Server Component, Client Signal:
+			//		All client signals are sent to the server when they are raised. This is handled by SignalContext.
+			//		So we need to do nothing.
+			//		As the server, we simply need to handle this as we would expect.
+			// We need to operate directly on the signals
+			//
+			// If this component requires ownership and we are the owner, operate.
+			// Otherwise, operate if we are the host.
+			// This means that we will handle all signals that we are meant to handle, however to handle
+			// a signal, we need to know about it. This is why we need to register special cases.
+			if ((RequiresOwnership && Parent.IsLocalOwner()) || (!RequiresOwnership && Instance.IsHostInstance()))
+			{
+				var signalContext = Parent.GetSignalContext<TSignal>();
+				signalContext.Register(onSignalRaised);
+			}
+			// We are the host, and we need to relay this msesage onto the client that should be handling it.
+			// Since host messages aren't automatically sent to clients, we need to mark it as needing to be
+			// sent.
+			// Multiple components registering the same signal will automatically handle this.
+			else if (RequiresOwnership && !Parent.IsLocalOwner() && Instance.IsHostInstance())
+			{
+				// TODO: Mark the signal as needing dispatch to the client that owns our parent
+			}
 		}
 
 		protected void Register<TSignal>(Func<TSignal, Task> onSignalRaised)
-			where TSignal : Signal
-		{
+			where TSignal : Signal<TSignal>
+        {
 			if (Parent == null)
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
-			var signalContext = Parent.GetSignalContext<TSignal>();
-			signalContext.Register(onSignalRaised);
+            // We need to operate on the signals
+            if ((RequiresOwnership && Parent.IsLocalOwner()) || (!RequiresOwnership && Instance.IsHostInstance()))
+            {
+                var signalContext = Parent.GetSignalContext<TSignal>();
+				signalContext.Register(onSignalRaised);
+			}
 		}
 
 		/// <summary>
-		/// Get the signal raise context for our parent entity for the signal that we are trying to raise
+		/// Get the signal raise context for our parent entity for the signal that we are trying to raise.
+		/// You are only allowed to raise on this context, for registration use the proper Register() functions
+		/// otherwise networking will break miserably.
 		/// </summary>
-		public SignalContext<TSignal> GetSignalRaiseContext<TSignal>()
-			where TSignal : Signal
-		{
+		public ISignalRaiseContext<TSignal> GetSignalRaiseContext<TSignal>()
+			where TSignal : Signal<TSignal>
+        {
 			if (Parent == null)
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			return Parent.GetSignalContext<TSignal>();
