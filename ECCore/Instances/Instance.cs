@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Code.Networking.Communication.NetworkLayer;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +9,22 @@ namespace ECCore.Instances
     {
 
         public static Instance DefaultInstance { get; } = new Instance();
+
+#if NET6_0_OR_GREATER
+        public INetworkInterface? NetworkInterface { get; }
+#else
+		public INetworkInterface NetworkInterface { get; }
+#endif
+
+        public Instance()
+        {
+            
+        }
+
+        public Instance(INetworkInterface networkInterface)
+        {
+            NetworkInterface = networkInterface;
+        }
 
         /// <summary>
         /// Create a new entity, adding any components that we need to add to it in the
