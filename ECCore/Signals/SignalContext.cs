@@ -33,12 +33,6 @@ public class SignalContext<TSignal> : ISignalRaiseContext<TSignal>
     public Task Raise(TSignal signal)
     {
         onRaised?.Invoke(signal);
-        // Client signals need to be dispatched to the server
-        if (Signal<TSignal>.IsAllowedFromClient && !instance.IsHostInstance())
-        {
-            // TODO: Handle dispatch to the server
-            
-        }
         return onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;
     }
 

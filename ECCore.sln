@@ -5,7 +5,9 @@ VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECCore", "ECCore\ECCore.csproj", "{A4D6988A-1B1F-4CDF-988F-E0D6832B412C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Networking", "Networking\Networking.csproj", "{A3553F8E-48B4-48C9-8DB0-EF8630B4ED6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Networking", "Networking\Networking.csproj", "{A3553F8E-48B4-48C9-8DB0-EF8630B4ED6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECCore.Tests", "ECCore.Tests\ECCore.Tests.csproj", "{10077ED5-96FD-453E-891D-7C0AE4CEC391}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{A3553F8E-48B4-48C9-8DB0-EF8630B4ED6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3553F8E-48B4-48C9-8DB0-EF8630B4ED6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3553F8E-48B4-48C9-8DB0-EF8630B4ED6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10077ED5-96FD-453E-891D-7C0AE4CEC391}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10077ED5-96FD-453E-891D-7C0AE4CEC391}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10077ED5-96FD-453E-891D-7C0AE4CEC391}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10077ED5-96FD-453E-891D-7C0AE4CEC391}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

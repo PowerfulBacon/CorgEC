@@ -1,3 +1,4 @@
+using ECCore.Attributes;
 using System;
 using System.Threading.Tasks;
 
@@ -7,7 +8,18 @@ namespace ECCore.Components
 		where TSelf : Component<TSelf>
 	{
 
-		protected void Register<TSignal>(Action<TSignal> onSignalRaised)
+		/// <summary>
+		/// Find the signal attributes and register them
+		/// </summary>
+		private void SetupSignals()
+		{
+			foreach (var signal in RegisteredSignals)
+			{
+				signal.registrationAction.Invoke(this);
+			}
+		}
+
+		protected void Register<TSignal>(Action<TSignal> onSignalRaised, AcceptFrom acceptFrom, RunOn runOn)
 			where TSignal : Signal<TSignal>
 		{
 			if (Parent == null)
@@ -35,7 +47,10 @@ namespace ECCore.Components
 			// Otherwise, operate if we are the host.
 			// This means that we will handle all signals that we are meant to handle, however to handle
 			// a signal, we need to know about it. This is why we need to register special cases.
-			if ((RequiresOwnership && Parent.IsLocalOwner()) || (!RequiresOwnership && Instance.IsHostInstance()))
+			if (((runOn & RunOn.Owner) != 0 && Parent.IsLocalOwner())
+				|| ((runOn & RunOn.Server) != 0 && Instance.IsHostInstance())
+				|| (runOn & RunOn.Everyone) != 0
+				|| ((runOn & RunOn.Client) != 0 && !Instance.IsHostInstance()))
 			{
 				var signalContext = Parent.GetSignalContext<TSignal>();
 				signalContext.Register(onSignalRaised);
@@ -44,22 +59,9 @@ namespace ECCore.Components
 			// Since host messages aren't automatically sent to clients, we need to mark it as needing to be
 			// sent.
 			// Multiple components registering the same signal will automatically handle this.
-			else if (RequiresOwnership && !Parent.IsLocalOwner() && Instance.IsHostInstance())
+			else if ((runOn & RunOn.Everyone | RunOn.Client | RunOn.Owner) != 0 && !Parent.IsLocalOwner() && Instance.IsHostInstance())
 			{
 				// TODO: Mark the signal as needing dispatch to the client that owns our parent
-			}
-		}
-
-		protected void Register<TSignal>(Func<TSignal, Task> onSignalRaised)
-			where TSignal : Signal<TSignal>
-        {
-			if (Parent == null)
-				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
-            // We need to operate on the signals
-            if ((RequiresOwnership && Parent.IsLocalOwner()) || (!RequiresOwnership && Instance.IsHostInstance()))
-            {
-                var signalContext = Parent.GetSignalContext<TSignal>();
-				signalContext.Register(onSignalRaised);
 			}
 		}
 

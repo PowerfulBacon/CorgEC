@@ -25,13 +25,15 @@ namespace ECCore.Components
 
 		void IComponent._Initialise()
 		{
-			Initialise();
+			SetupSignals();
+            Initialise();
 		}
 
 		/// <summary>
 		/// Initialise this component and register the appropriate signals.
 		/// </summary>
-		protected internal abstract void Initialise();
+		protected internal virtual void Initialise()
+		{ }
 
 		void IComponent._Remove()
 		{
