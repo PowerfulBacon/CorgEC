@@ -46,5 +46,14 @@ namespace ECCore.Instances
             return true;
         }
 
+        /// <summary>
+        /// Are we considered a client instance?
+        /// </summary>
+        /// <returns></returns>
+        public bool IsClientInstance()
+        {
+            return true;
+        }
+
     }
 }

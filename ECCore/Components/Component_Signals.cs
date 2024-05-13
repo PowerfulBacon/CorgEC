@@ -1,3 +1,6 @@
+using Assets.Code.Networking.Communication.ApplicationLayer;
+using Assets.Code.Networking.Communication.NetworkLayer;
+using Assets.Code.Networking.Communication.Packets;
 using ECCore.Attributes;
 using System;
 using System.Threading.Tasks;
@@ -50,7 +53,7 @@ namespace ECCore.Components
 			if (((runOn & RunOn.Owner) != 0 && Parent.IsLocalOwner())
 				|| ((runOn & RunOn.Server) != 0 && Instance.IsHostInstance())
 				|| (runOn & RunOn.Everyone) != 0
-				|| ((runOn & RunOn.Client) != 0 && !Instance.IsHostInstance()))
+				|| ((runOn & RunOn.Client) != 0 && Instance.IsClientInstance()))
 			{
 				var signalContext = Parent.GetSignalContext<TSignal>();
 				signalContext.Register(onSignalRaised);
@@ -62,6 +65,7 @@ namespace ECCore.Components
 			else if ((runOn & RunOn.Everyone | RunOn.Client | RunOn.Owner) != 0 && !Parent.IsLocalOwner() && Instance.IsHostInstance())
 			{
 				// TODO: Mark the signal as needing dispatch to the client that owns our parent
+
 			}
 		}
 
@@ -72,11 +76,19 @@ namespace ECCore.Components
 		/// </summary>
 		public ISignalRaiseContext<TSignal> GetSignalRaiseContext<TSignal>()
 			where TSignal : Signal<TSignal>
-        {
+		{
 			if (Parent == null)
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			return Parent.GetSignalContext<TSignal>();
 		}
 
 	}
+
+    public class NetworkSignal : Packet<NetworkSignal>
+    {
+        protected override void Recieve(NetworkManager localNetworkManager, INetworkInterface sender, double sendTime)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
