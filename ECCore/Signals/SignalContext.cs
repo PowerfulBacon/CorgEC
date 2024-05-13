@@ -25,6 +25,11 @@ public class SignalContext<TSignal> : ISignalRaiseContext<TSignal>
 
     private Instance instance;
 
+    /// <summary>
+    /// Who this signal gets relayed to
+    /// </summary>
+    internal RunOn dispatchTo;
+
     public SignalContext(Instance instance)
     {
         this.instance = instance;
@@ -33,7 +38,9 @@ public class SignalContext<TSignal> : ISignalRaiseContext<TSignal>
     public Task Raise(TSignal signal)
     {
         onRaised?.Invoke(signal);
-        return onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;
+        var result = onRaisedAsync?.Invoke(signal) ?? Task.CompletedTask;
+        // Network the signal
+        return result;
     }
 
     internal void Register(Func<TSignal, Task> action)

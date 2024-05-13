@@ -1,0 +1,3 @@
+- How do we determine the initial state of entities?
+- How do we synchronise which signal holder belongs to what?
+- Time synchronisation

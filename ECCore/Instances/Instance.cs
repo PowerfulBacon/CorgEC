@@ -1,4 +1,5 @@
-﻿using Assets.Code.Networking.Communication.NetworkLayer;
+﻿using Assets.Code.Networking.Communication.ApplicationLayer;
+using Assets.Code.Networking.Communication.NetworkLayer;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,22 +9,32 @@ namespace ECCore.Instances
     public class Instance
     {
 
+        public static Instance InstanceFromNetwork(NetworkManager network) => instances[network];
+
         public static Instance DefaultInstance { get; } = new Instance();
 
-#if NET6_0_OR_GREATER
-        public INetworkInterface? NetworkInterface { get; }
-#else
-		public INetworkInterface NetworkInterface { get; }
-#endif
+        private static Dictionary<NetworkManager, Instance> instances = new Dictionary<NetworkManager, Instance>();
+
+        /// <summary>
+        /// The network interface that the instance can send messages on
+        /// </summary>
+        public NetworkManager NetworkManager { get; }
 
         public Instance()
         {
-            
+            NetworkManager = new NetworkManager();
         }
 
-        public Instance(INetworkInterface networkInterface)
+        public Instance(NetworkManager networkManager)
         {
-            NetworkInterface = networkInterface;
+            NetworkManager = networkManager;
+            instances.Add(networkManager, this);
+        }
+
+        ~Instance()
+        {
+            if (NetworkManager != null)
+                instances.Remove(NetworkManager);
         }
 
         /// <summary>

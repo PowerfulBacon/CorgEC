@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Assets.Code.Networking.Serialisation;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ECCore.Components
 {
-	public interface IComponent
-	{
+	public interface IComponent : INetworkedSerialised
+    {
 #if NET6_0_OR_GREATER
 		Entity? Parent { get; internal set; }
 

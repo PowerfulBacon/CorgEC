@@ -1,10 +1,12 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ECCore.Attributes
 {
     [AttributeUsage(AttributeTargets.Method)]
+    [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers | ImplicitUseTargetFlags.WithInheritors)]
     public class OnSignalAttribute : Attribute
     {
 
@@ -29,6 +31,7 @@ namespace ECCore.Attributes
         Client = (1 << 1),
         Owner = (1 << 2),
         Anyone = (1 << 3),
+        Self = (1 << 4),
     }
 
     public enum RunOn : byte
@@ -37,5 +40,15 @@ namespace ECCore.Attributes
         Client = (1 << 1),
         Owner = (1 << 2),
         Everyone = (1 << 3),
+        Self = (1 << 4),
     }
+
+    public enum SentFrom : byte
+    {
+        Server = (1 << 0),
+        Client = (1 << 1),
+        Owner = (1 << 2),
+        Self = (1 << 4),
+    }
+
 }

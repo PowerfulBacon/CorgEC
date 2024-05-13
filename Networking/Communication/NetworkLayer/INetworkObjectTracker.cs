@@ -17,10 +17,14 @@ namespace Assets.Code.Networking.Communication.NetworkLayer
         /// </summary>
         IReadOnlyDictionary<uint, INetworkedSerialised> KnownObjects { get; }
 
+#if NET6_0_OR_GREATER
         /// <summary>
         /// Internally accessed only: Allows us to add to the accessible objects list
         /// </summary>
-        internal IDictionary<uint, INetworkedSerialised> AccessibleObjects { get; }
+        internal IDictionary<uint, INetworkedSerialised> _AccessibleObjects { get; }
+#else
+        IDictionary<uint, INetworkedSerialised> _AccessibleObjects { get; }
+#endif
 
     }
 }

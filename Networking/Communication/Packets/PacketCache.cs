@@ -13,11 +13,11 @@ namespace Assets.Code.Networking.Communication.Packets
 
         public static IEnumerable<PropertyInfo> SerialisedProperties = typeof(TPacketType)
             .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(x => (!x.DeclaringType.IsConstructedGenericType || x.DeclaringType.GetGenericTypeDefinition() != typeof(Packet<>)) && x.Name != "SecurityFlags");
+            .Where(x => (!x.DeclaringType.IsConstructedGenericType || x.DeclaringType.GetGenericTypeDefinition() != typeof(Packet<>)) && x.GetCustomAttribute(typeof(NetIgnoreAttribute)) == null);
 
         public static IEnumerable<FieldInfo> SerialisedFields = typeof(TPacketType)
             .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(x => !x.DeclaringType.IsConstructedGenericType || x.DeclaringType.GetGenericTypeDefinition() != typeof(Packet<>));
+            .Where(x => (!x.DeclaringType.IsConstructedGenericType || x.DeclaringType.GetGenericTypeDefinition() != typeof(Packet<>)) && x.GetCustomAttribute(typeof(NetIgnoreAttribute)) == null);
         
         private static ushort? pACKET_ID = null;
 
@@ -31,4 +31,7 @@ namespace Assets.Code.Networking.Communication.Packets
             } set => pACKET_ID = value; }
 
     }
+
+    public class NetIgnoreAttribute : Attribute
+    { }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using ECCore.Attributes;
+using System.Threading.Tasks;
 
 public interface ISignalRaiseContext<TSignal> where TSignal : Signal<TSignal>
 {

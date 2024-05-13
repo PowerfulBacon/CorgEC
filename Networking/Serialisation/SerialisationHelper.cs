@@ -104,8 +104,8 @@ namespace Assets.Code.Networking.Serialisation
                     createdEntity.NetworkID = identifier & ~MOST_SIGNIFICANT_BIT;
                     // Deserialise
                     createdEntity.Deserialise(sender, reader);
-                    if (!localObjects.AccessibleObjects.ContainsKey(identifier & ~MOST_SIGNIFICANT_BIT))
-                        localObjects.AccessibleObjects.Add(identifier & ~MOST_SIGNIFICANT_BIT, createdEntity);
+                    if (!localObjects._AccessibleObjects.ContainsKey(identifier & ~MOST_SIGNIFICANT_BIT))
+                        localObjects._AccessibleObjects.Add(identifier & ~MOST_SIGNIFICANT_BIT, createdEntity);
                     //  Return the object
                     return createdEntity;
                 }
@@ -215,9 +215,9 @@ namespace Assets.Code.Networking.Serialisation
                     // Send the type as an identifier (we need to know how to deserialise the object on the other end)
                     writer.Write(PacketTypeList.SerialisableTyeIDs[networkedSerialised.GetType()]);
                     // Send the entire object
-                    networkedSerialised.Serialise(writer);
+                    networkedSerialised.Serialise(target, writer);
                     // Now that they know about the object, mark that in
-                    target.AccessibleObjects.Add(networkedSerialised.NetworkID, networkedSerialised);
+                    target._AccessibleObjects.Add(networkedSerialised.NetworkID, networkedSerialised);
                     return;
                 }
                 else

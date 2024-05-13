@@ -1,31 +1,19 @@
-﻿//#define DEBUG_PACKETS
-
+﻿using Assets.Code.Networking.Communication.NetworkLayer;
 using Assets.Code.Networking.Serialisation;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
-namespace Assets.Code.Networking.Communication.NetworkLayer
+namespace Networking.Communication.NetworkLayer
 {
-    internal class SocketInterface : INetworkInterface, IDisposable
+    public class LocalInterface : INetworkInterface, IDisposable
     {
 
-        public const int DEFAULT_TICKRATE = 20;
-
         public bool IsHost { get; }
-
-        /// <summary>
-        /// The base tick rate of the server, for continuous packet updates that can't be sent the moment
-        /// they are processed.
-        /// This will handle things like movement which is interpolated, while single events such as shooting
-        /// will by handled immediately.
-        /// </summary>
-        public int TickRate { get; set; }
 
         public Action<byte[], int, int> OnRecieveBytes { set; get; }
         public Action OnDisconnect { set; get; }
@@ -40,7 +28,9 @@ namespace Assets.Code.Networking.Communication.NetworkLayer
 
         public int BytesRecieved { get; private set; }
 
-        private Socket _socket;
+        private TaskCompletionSource<byte[]> recieveQueue = new TaskCompletionSource<byte[]>();
+
+        private bool sending = true;
 
         /// <summary>
         /// Constructor will automatically start the task that handles reading the socket
@@ -49,12 +39,10 @@ namespace Assets.Code.Networking.Communication.NetworkLayer
         /// <param name="isHost"></param>
         /// <param name="address"></param>
         /// <param name="port"></param>
-        public SocketInterface(Socket socket, bool isHost, IPAddress address, int port, int tickRate = DEFAULT_TICKRATE)
+        public LocalInterface(bool isHost)
         {
             IsHost = isHost;
-            _socket = socket;
             _ = StartReadingTask();
-            TickRate = tickRate;
         }
 
         private Task StartReadingTask()
@@ -64,15 +52,11 @@ namespace Assets.Code.Networking.Communication.NetworkLayer
             // Start our socket reading task
             return Task.Run(async () =>
             {
-                while (_socket.Connected)
+                while (sending)
                 {
-                    var buffer = new byte[1024];
-#if NET6_0_OR_GREATER
-                    var received = await _socket.ReceiveAsync(buffer, SocketFlags.None);
-#else
-					var received = _socket.Receive(buffer, SocketFlags.None);
-#endif
-					BytesRecieved += received;
+                    var buffer = await recieveQueue.Task;
+                    int received = buffer.Length;
+                    BytesRecieved += received;
                     // Pointer is the element that we should read first
                     int pointer = 0;
 #if DEBUG_PACKETS
@@ -164,13 +148,13 @@ namespace Assets.Code.Networking.Communication.NetworkLayer
             BytesSent += message.Length;
             bytes.CopyTo(message, sizeof(int));
             BitConverter.GetBytes((int)bytes.Length).CopyTo(message, 0);
-            _socket.Send(message);
+            recieveQueue.SetResult(message);
+            recieveQueue = new TaskCompletionSource<byte[]>();
         }
 
         public void Dispose()
         {
-            _socket?.Dispose();
+            sending = false;
         }
     }
 }
-       

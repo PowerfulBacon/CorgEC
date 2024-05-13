@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using Assets.Code.Networking.Communication.NetworkLayer;
+using System.IO;
 
 namespace ECCore.Components
 {
@@ -74,15 +76,15 @@ namespace ECCore.Components
 			return valid;
 		}
 #else
-    /// <summary>
-    /// Sets up the dependencies for this component, must be called before
-    /// the component is ready to use.
-    /// Dependencies allow for direct function calls between 2 different components,
-    /// for cases where you may need exactly 1 call, rather than the 0 to many calls
-    /// that signals offer.
-    /// </summary>
-    /// <returns></returns>
-    bool IComponent._SetupDependencies()
+        /// <summary>
+        /// Sets up the dependencies for this component, must be called before
+        /// the component is ready to use.
+        /// Dependencies allow for direct function calls between 2 different components,
+        /// for cases where you may need exactly 1 call, rather than the 0 to many calls
+        /// that signals offer.
+        /// </summary>
+        /// <returns></returns>
+        bool IComponent._SetupDependencies()
     {
         // Try to access the dependency cache, or build it
         if (!DependencyCache.TryGetValue(GetType(), out var dependencies))

@@ -64,9 +64,9 @@ namespace ECCore.Components
 			// Multiple components registering the same signal will automatically handle this.
 			else if ((runOn & RunOn.Everyone | RunOn.Client | RunOn.Owner) != 0 && !Parent.IsLocalOwner() && Instance.IsHostInstance())
 			{
-				// TODO: Mark the signal as needing dispatch to the client that owns our parent
-
-			}
+                var signalContext = Parent.GetSignalContext<TSignal>();
+				signalContext.dispatchTo |= runOn;
+            }
 		}
 
 		/// <summary>

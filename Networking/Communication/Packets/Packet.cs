@@ -30,6 +30,7 @@ namespace Assets.Code.Networking.Communication.Packets
         /// <summary>
         /// Security flags set on this packet.
         /// </summary>
+        [NetIgnore]
         public virtual PacketSecurityFlags SecurityFlags { get; } = PacketSecurityFlags.DEFAULT;
  
         /// <summary>
@@ -41,19 +42,23 @@ namespace Assets.Code.Networking.Communication.Packets
         {
             lock (this)
             {
-                using MemoryStream memoryStream = new MemoryStream();
-                using BinaryWriter writer = new BinaryWriter(memoryStream);
-                // we need to insert our ID
-                writer.Write(PacketCache<TThis>.PACKET_ID);
-                foreach (var property in PacketCache<TThis>.SerialisedProperties)
+                using (MemoryStream memoryStream = new MemoryStream())
                 {
-                    SerialisationHelper.Serialise(target, property.PropertyType, property.GetValue(this), writer);
+                    using (BinaryWriter writer = new BinaryWriter(memoryStream))
+                    {
+                        // we need to insert our ID
+                        writer.Write(PacketCache<TThis>.PACKET_ID);
+                        foreach (var property in PacketCache<TThis>.SerialisedProperties)
+                        {
+                            SerialisationHelper.Serialise(target, property.PropertyType, property.GetValue(this), writer);
+                        }
+                        foreach (var field in PacketCache<TThis>.SerialisedFields)
+                        {
+                            SerialisationHelper.Serialise(target, field.FieldType, field.GetValue(this), writer);
+                        }
+                        return memoryStream.ToArray();
+                    }
                 }
-                foreach (var field in PacketCache<TThis>.SerialisedFields)
-                {
-                    SerialisationHelper.Serialise(target, field.FieldType, field.GetValue(this), writer);
-                }
-                return memoryStream.ToArray();
             }
         }
 

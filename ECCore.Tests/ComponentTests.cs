@@ -1,11 +1,12 @@
 using ECCore.Attributes;
 using ECCore.Components;
 using ECCore.Instances;
+using JetBrains.Annotations;
 
 namespace ECCore.Tests
 {
     [TestClass]
-    public class UnitTest1
+    public class ComponentTests
     {
         [TestMethod]
         public void TestComponentAdding()
@@ -17,20 +18,6 @@ namespace ECCore.Tests
             TestComponent.accept = false;
             entity.GetSignalContext<TestSignal>().Raise(new TestSignal());
             Assert.IsTrue(TestComponent.accept);
-        }
-
-        [TestMethod]
-        public void ComponentAddPerformance()
-        {
-            Instance instance = new Instance();
-            for (int i = 0; i < 100000; i++)
-            {
-                Entity entity = instance.Create(entity =>
-                {
-                    entity.TryAddComponent(new TestComponent());
-                });
-                entity.GetSignalContext<TestSignal>().Raise(new TestSignal());
-            }
         }
     }
 

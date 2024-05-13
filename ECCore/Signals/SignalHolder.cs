@@ -1,6 +1,9 @@
-﻿using ECCore.Instances;
+﻿using Assets.Code.Networking.Communication.NetworkLayer;
+using Assets.Code.Networking.Serialisation;
+using ECCore.Instances;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +13,7 @@ namespace ECSCore.Signals
 	public class SignalHolder
 	{
 
-        public Instance Instance { get; }
+        public Instance Instance { get; internal set; }
 
         /// <summary>
         /// Needs to be created via helpers
@@ -34,7 +37,7 @@ namespace ECSCore.Signals
 			return signalContext;
 		}
 
-		#endregion
+        #endregion
 
-	}
+    }
 }

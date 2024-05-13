@@ -25,7 +25,7 @@ namespace Assets.Code.Networking.Serialisation
         /// Serialise this object into the binary writer.
         /// </summary>
         /// <param name="writer"></param>
-        void Serialise(BinaryWriter writer);
+        void Serialise(INetworkInterface target, BinaryWriter writer);
 
         /// <summary>
         /// Read this object from the provided binary reader.

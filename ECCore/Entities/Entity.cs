@@ -1,16 +1,21 @@
+using Assets.Code.Networking.Communication.ApplicationLayer;
+using Assets.Code.Networking.Communication.NetworkLayer;
+using Assets.Code.Networking.Communication.Packets;
+using Assets.Code.Networking.Serialisation;
 using ECCore.Components;
 using ECCore.Instances;
 using ECSCore.Signals;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 /// <summary>
 /// The base of logical entities in the game world,
 /// seperated from their representation in Unity.
 /// </summary>
-public partial class Entity : SignalHolder, IEnumerable<Entity>
+public sealed partial class Entity : SignalHolder, IEnumerable<Entity>, INetworkedSerialised
 {
 
 	public bool Initialized { get; private set; } = false;
@@ -21,6 +26,11 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
     /// </summary>
     protected Entity(Instance instance) : base(instance)
 	{ }
+
+	internal void JoinInstance(Instance instance)
+	{
+		Instance = instance;
+	}
 
 	/// <summary>
 	/// Create a new entity, adding any components that we need to add to it in the
@@ -41,6 +51,11 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		ValidateComponents();
 		InitialiseComponents();
 		Initialized = true;
+		// Tell other instances that an entity was created
+		if (Instance.IsHostInstance())
+		{
+			new EntityCreation(this).SendToOthers(Instance.NetworkManager);
+        }
 	}
 
 	public void Destroy()
@@ -54,6 +69,12 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		Location = null;
 		// Destroy the entity
 		Destroyed = true;
+		// Tell others that we are destroyed
+		if (Instance.IsHostInstance())
+		{
+			// TODO: Send this to only the clients that are aware of this entity.
+			new EntityDestroy(this).SendToOthers(Instance.NetworkManager);
+        }
 	}
 
 	#region Ownership
@@ -395,6 +416,91 @@ public partial class Entity : SignalHolder, IEnumerable<Entity>
 		return base.GetHashCode();
 	}
 
-	#endregion
+    #endregion
+
+    public uint NetworkID { get; set; }
+
+    public void Serialise(INetworkInterface target, BinaryWriter writer)
+    {
+		writer.Write(Initialized);
+        writer.Write(Destroyed);
+		SerialisationHelper.Serialise(target, typeof(Entity), Location, writer);
+		writer.Write(Contents?.Count ?? 0);
+		if (Contents != null)
+		{
+			foreach (var entity in Contents)
+			{
+				SerialisationHelper.Serialise(target, typeof(Entity), entity, writer);
+			}
+		}
+		writer.Write(Components.Count);
+		foreach (var component in Components)
+        {
+            SerialisationHelper.Serialise(target, typeof(IComponent), component, writer);
+        }
+    }
+
+    public void Deserialise(INetworkInterface sender, BinaryReader reader)
+    {
+		Initialized = reader.ReadBoolean();
+		Destroyed = reader.ReadBoolean();
+		Location = (Entity)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(Entity), reader);
+		var count = reader.ReadInt32();
+		if (count == 0)
+		{
+			Contents = null;
+		}
+		else
+		{
+			Contents = new List<Entity>();
+            Contents.Clear();
+			for (int i = 0; i < count; i++)
+			{
+				Contents.Add((Entity)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(Entity), reader));
+			}
+		}
+		components.Clear();
+        for (int i = 0; i < reader.ReadInt32(); i++)
+        {
+            components.Add((IComponent)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(IComponent), reader));
+        }
+    }
+
+}
+
+internal class EntityCreation : Packet<EntityCreation>
+{
+
+	public Entity createdEntity;
+
+    public EntityCreation(Entity createdEntity)
+    {
+        this.createdEntity = createdEntity;
+    }
+
+    protected override void Recieve(NetworkManager localNetworkManager, INetworkInterface sender, double sendTime)
+    {
+		Instance instance = Instance.InstanceFromNetwork(localNetworkManager);
+		createdEntity.JoinInstance(instance);
+		// We already have components from the point of initialisation
+		createdEntity.Initialise();
+    }
+
+}
+
+internal class EntityDestroy : Packet<EntityDestroy>
+{
+
+    public Entity destroyedEntity;
+
+    public EntityDestroy(Entity destroyedEntity)
+    {
+        this.destroyedEntity = destroyedEntity;
+    }
+
+    protected override void Recieve(NetworkManager localNetworkManager, INetworkInterface sender, double sendTime)
+    {
+        destroyedEntity.Destroy();
+    }
 
 }

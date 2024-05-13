@@ -19,7 +19,7 @@ public class NetworkedComponentExample : Component
     [OnSignal(AcceptFrom.Owner, RunOn.Server)]
     public void HandleOwnerCommand(GenericSignal signal)
     {
-
+        
     }
 
 }

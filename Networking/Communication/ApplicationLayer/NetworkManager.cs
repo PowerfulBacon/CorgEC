@@ -13,6 +13,8 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
     public class NetworkManager : INetworkObjectTracker
     {
 
+        public Action<Exception> onException;
+
         public bool IsHost { get; private set; } = false;
 
         private List<INetworkInterface> _connections = new List<INetworkInterface>();
@@ -22,13 +24,20 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
 
         public IReadOnlyDictionary<uint, INetworkedSerialised> KnownObjects => _knownObjects;
 
-        IDictionary<uint, INetworkedSerialised> INetworkObjectTracker.AccessibleObjects => _knownObjects;
+        IDictionary<uint, INetworkedSerialised> INetworkObjectTracker._AccessibleObjects => _knownObjects;
 
         internal IDictionary<uint, INetworkedSerialised> internalObjectAccess => _knownObjects;
 
         private TaskCompletionSource<bool> message = new TaskCompletionSource<bool>();
 
         public LocalNetworkInterface LoopbackInterface { get; }
+
+        public NetworkManager()
+        {
+            IsHost = true;
+            LoopbackInterface = new LocalNetworkInterface(this);
+            ConnectClient(LoopbackInterface, true);
+        }
 
         public NetworkManager(INetworkHost networkHost)
         {
@@ -90,6 +99,7 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
                         {
                             // Critical exception
                             Console.Error.WriteLine($"Failed to parse packet type {currentPacket?.GetType().Name ?? "N/A"}\n{string.Join(",", bytes.Skip(start).Take(length))}\n{e}");
+                            onException?.Invoke(e);
                             return;
                         }
                     }
@@ -130,7 +140,7 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
 
         public IReadOnlyDictionary<uint, INetworkedSerialised> KnownObjects => _manager.KnownObjects;
 
-        IDictionary<uint, INetworkedSerialised> INetworkObjectTracker.AccessibleObjects => _manager.internalObjectAccess;
+        IDictionary<uint, INetworkedSerialised> INetworkObjectTracker._AccessibleObjects => _manager.internalObjectAccess;
 
         public int BytesSent { get; private set; }
 
