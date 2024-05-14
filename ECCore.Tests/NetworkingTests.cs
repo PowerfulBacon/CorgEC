@@ -1,5 +1,6 @@
 ﻿using Assets.Code.Networking.Communication.ApplicationLayer;
 using Assets.Code.Networking.Communication.Packets;
+using ECCore.Attributes;
 using ECCore.Components;
 using ECCore.Instances;
 using Networking.Communication.NetworkLayer;
@@ -63,6 +64,25 @@ namespace ECCore.Tests
             Assert.AreEqual(2, InitialisingComponent.addCount, "Should have 2 component added, one for server and 1 for client");
         }
 
+        [TestMethod]
+        public void TestSignal_ServerToClient()
+        {
+            // Setup
+            EventTestComponent.Reset();
+            LocalServer localHost = new LocalServer();
+            NetworkManager server = new NetworkManager(localHost);
+            NetworkManager client = new NetworkManager(localHost.Connect());
+            Instance serverInstance = new Instance(server);
+            Instance clientInstance = new Instance(client);
+            // Perform Functions
+            var serverEntity = serverInstance.Create(entity => {
+                entity.TryAddComponent(new EventTestComponent());
+            });
+            serverEntity.GetSignalContext<TestSignal>().Raise(new TestSignal());
+            // Test Results
+            Assert.IsTrue(EventTestComponent.serverToClient);
+        }
+
     }
 
     public class InitialisingComponent : Component<InitialisingComponent>
@@ -91,4 +111,36 @@ namespace ECCore.Tests
 			this.boolean = boolean;
 		}
 	}
+
+    public class EventTestComponent : Component<EventTestComponent>
+    {
+
+        public static void Reset()
+        {
+            serverToClient = false;
+            clientToServer = false;
+        }
+
+        public static bool serverToClient = false;
+
+        [OnSignal(AcceptFrom.Server, RunOn.Client)]
+        public void ServerToClient(TestSignal testSignal)
+        {
+            if (Instance.IsHostInstance())
+                Assert.Fail("Server to client signal was raised on the server");
+            serverToClient = true;
+        }
+
+        public static bool clientToServer = false;
+
+        [OnSignal(AcceptFrom.Server, RunOn.Client)]
+        public void ClientToServer(TestSignal testSignal)
+        {
+            if (Instance.IsClientInstance())
+                Assert.Fail("Client to server signal was raised on the client");
+            clientToServer = true;
+        }
+
+    }
+
 }
