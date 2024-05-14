@@ -23,6 +23,12 @@ namespace ECCore.Attributes
             AcceptFrom = acceptFrom;
             RunOn = runOn;
         }
+
+        public OnSignalAttribute()
+        {
+            AcceptFrom = AcceptFrom.Self;
+            RunOn = RunOn.Self;
+        }
     }
 
     public enum AcceptFrom : byte
