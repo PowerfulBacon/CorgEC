@@ -19,8 +19,11 @@ namespace Assets.Code.Networking.Communication.Packets
         public static IReadOnlyDictionary<uint, Type> SerialisableTypes => serialisableTypes;
         public static IReadOnlyDictionary<Type, uint> SerialisableTyeIDs => serialisableTypeIDs;
 
+        private static HashSet<Assembly> loadedAssemblies = new HashSet<Assembly>();
+
         public static void Generate(params Assembly[] assemblies)
         {
+
             foreach (var assembly in assemblies)
             {
                 Console.WriteLine($"Loading assembly {assembly.GetName().Name}");
@@ -28,6 +31,7 @@ namespace Assets.Code.Networking.Communication.Packets
             // Load the types and assign them IDs
             uint identifier = 0;
             foreach (var serialisableType in assemblies
+                .Where(asm => !loadedAssemblies.Contains(asm))
                 .SelectMany(x => x.GetTypes())
                 .Where(x => {
                     return typeof(INetworkedSerialised).IsAssignableFrom(x) && !x.IsAbstract;
@@ -40,6 +44,7 @@ namespace Assets.Code.Networking.Communication.Packets
             Console.WriteLine($"Compiled {identifier} serialisable types.");
             // Load the packets and assign them IDs
             PacketArray = assemblies
+                .Where(asm => !loadedAssemblies.Contains(asm))
                 .SelectMany(x => x.GetTypes())
                 .Where(x => x.BaseType != null && x.BaseType.IsConstructedGenericType && x.BaseType.GetGenericTypeDefinition() == typeof(Packet<>) && !x.IsAbstract)
                 .Select(x => (IPacket)FormatterServices.GetUninitializedObject(x))
@@ -50,7 +55,11 @@ namespace Assets.Code.Networking.Communication.Packets
                 IPacket packet = PacketArray[i];
                 packet.Compile(i);
             }
-            Console.WriteLine($"Compiled {PacketArray.Length} packets.");
+            foreach (var loadedAssembly in assemblies)
+            {
+                loadedAssemblies.Add(loadedAssembly);
+			}
+			Console.WriteLine($"Compiled {PacketArray.Length} packets.");
         }
 
     }

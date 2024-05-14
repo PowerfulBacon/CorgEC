@@ -39,10 +39,18 @@ namespace ECCore.Tests
             Instance serverInstance = new Instance(server);
             Instance clientInstance = new Instance(client);
             // Perform Functions
-
-            // Test Results
-            Assert.Fail("This test hasn't been written yet");
-        }
+            Entity entity = serverInstance.Create(entity =>
+            {
+                entity.TryAddComponent(new DataStoreComponent("hello", 55, true));
+            });
+			// Test Results
+			var clientEntity = client.KnownObjects[entity.NetworkID] as Entity;
+            Assert.IsNotNull(clientEntity, "Client entity should not be null and should have been communicated.");
+            Assert.IsTrue(clientEntity.HasComponent<DataStoreComponent>());
+            Assert.AreEqual("hello", clientEntity.GetComponent<DataStoreComponent>().message, "The data store component should have the message set.");
+			Assert.AreEqual(55, clientEntity.GetComponent<DataStoreComponent>().number, "The data store component should have the number set.");
+			Assert.IsTrue(clientEntity.GetComponent<DataStoreComponent>().boolean, "The data store component should have the boolean set.");
+		}
 
         [TestMethod]
         public void TestComponentAdded()
@@ -83,4 +91,19 @@ namespace ECCore.Tests
         }
 
     }
+
+    public class DataStoreComponent : Component<DataStoreComponent>
+    {
+
+        public string message;
+        public int number;
+        public bool boolean;
+
+		public DataStoreComponent(string message, int number, bool boolean)
+		{
+			this.message = message;
+			this.number = number;
+			this.boolean = boolean;
+		}
+	}
 }
