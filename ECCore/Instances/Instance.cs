@@ -54,7 +54,7 @@ namespace ECCore.Instances
         /// <returns></returns>
         public bool IsHostInstance()
         {
-            return true;
+            return NetworkManager.IsHost;
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace ECCore.Instances
         /// <returns></returns>
         public bool IsClientInstance()
         {
-            return true;
+            return !NetworkManager.IsHost;
         }
 
     }

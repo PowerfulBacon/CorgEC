@@ -440,11 +440,11 @@ public sealed partial class Entity : SignalHolder, IEnumerable<Entity>, INetwork
         }
     }
 
-    public void Deserialise(INetworkInterface sender, BinaryReader reader)
+    public void Deserialise(INetworkInterface sender, INetworkObjectTracker localObjects, BinaryReader reader)
     {
 		Initialized = reader.ReadBoolean();
 		Destroyed = reader.ReadBoolean();
-		Location = (Entity)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(Entity), reader);
+		Location = (Entity)SerialisationHelper.Deserialise(sender, localObjects, typeof(Entity), reader);
 		var count = reader.ReadInt32();
 		if (count == 0)
 		{
@@ -456,13 +456,16 @@ public sealed partial class Entity : SignalHolder, IEnumerable<Entity>, INetwork
             Contents.Clear();
 			for (int i = 0; i < count; i++)
 			{
-				Contents.Add((Entity)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(Entity), reader));
+				Contents.Add((Entity)SerialisationHelper.Deserialise(sender, localObjects, typeof(Entity), reader));
 			}
 		}
-		components.Clear();
-        for (int i = 0; i < reader.ReadInt32(); i++)
+		components = new List<IComponent>();
+		var componentCount = reader.ReadInt32();
+        for (int i = 0; i < componentCount; i++)
         {
-            components.Add((IComponent)SerialisationHelper.Deserialise(sender, Instance.NetworkManager, typeof(IComponent), reader));
+			IComponent deserialisedComponent = (IComponent)SerialisationHelper.Deserialise(sender, localObjects, typeof(IComponent), reader);
+			deserialisedComponent.Parent = this;
+            components.Add(deserialisedComponent);
         }
     }
 

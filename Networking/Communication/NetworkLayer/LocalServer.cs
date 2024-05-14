@@ -19,12 +19,13 @@ namespace Networking.Communication.NetworkLayer
 
         public LocalInterface Connect()
         {
-            // Create a socket interface
+            // Create a socket interface that lets us talk to the client
             LocalInterface clientInterface = new LocalInterface(false);
             // Handle the connection
             OnConnectionRecieved?.Invoke(clientInterface);
             connectionRecievedHooks?.Invoke(clientInterface);
-            return clientInterface;
+            // Return the thing that the client uses to talk to the server
+            return clientInterface.Reverse;
         }
 
     }

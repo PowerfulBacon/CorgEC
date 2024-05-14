@@ -103,7 +103,7 @@ namespace Assets.Code.Networking.Serialisation
                     INetworkedSerialised createdEntity = (INetworkedSerialised)FormatterServices.GetUninitializedObject(deserialisedType);
                     createdEntity.NetworkID = identifier & ~MOST_SIGNIFICANT_BIT;
                     // Deserialise
-                    createdEntity.Deserialise(sender, reader);
+                    createdEntity.Deserialise(sender, localObjects, reader);
                     if (!localObjects._AccessibleObjects.ContainsKey(identifier & ~MOST_SIGNIFICANT_BIT))
                         localObjects._AccessibleObjects.Add(identifier & ~MOST_SIGNIFICANT_BIT, createdEntity);
                     //  Return the object

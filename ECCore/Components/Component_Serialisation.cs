@@ -36,16 +36,16 @@ namespace ECCore.Components
             }
         }
 
-        public void Deserialise(INetworkInterface sender, BinaryReader reader)
+        public void Deserialise(INetworkInterface sender, INetworkObjectTracker localObjects, BinaryReader reader)
         {
             foreach (var property in ComponentCache<TSelf>.SerialisedProperties)
             {
-                var value = SerialisationHelper.Deserialise(sender, sender, property.PropertyType, reader);
+                var value = SerialisationHelper.Deserialise(sender, localObjects, property.PropertyType, reader);
                 property.SetValue(this, value);
             }
             foreach (var field in ComponentCache<TSelf>.SerialisedFields)
             {
-                var value = SerialisationHelper.Deserialise(sender, sender, field.FieldType, reader);
+                var value = SerialisationHelper.Deserialise(sender, localObjects, field.FieldType, reader);
                 field.SetValue(this, value);
             }
         }

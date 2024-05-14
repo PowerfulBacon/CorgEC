@@ -19,23 +19,16 @@ namespace ECCore.Tests
         public void Setup()
         {
             PacketTypeList.Generate(typeof(InitialisingComponent).Assembly, typeof(Entity).Assembly, typeof(NetworkManager).Assembly);
+            NetworkManager.simulatedDelay = null;
         }
 
         [TestMethod]
-        public void TestEntityCreation()
+        public void TestComponentSerialisation()
         {
             // Setup
             LocalServer localHost = new LocalServer();
             NetworkManager server = new NetworkManager(localHost);
             NetworkManager client = new NetworkManager(localHost.Connect());
-            server.onException += e =>
-            {
-                Assert.Fail(e.ToString());
-            };
-            client.onException += e =>
-            {
-                Assert.Fail(e.ToString());
-            };
             Instance serverInstance = new Instance(server);
             Instance clientInstance = new Instance(client);
             // Perform Functions
@@ -43,30 +36,22 @@ namespace ECCore.Tests
             {
                 entity.TryAddComponent(new DataStoreComponent("hello", 55, true));
             });
-			// Test Results
-			var clientEntity = client.KnownObjects[entity.NetworkID] as Entity;
+            // Test Results
+            var clientEntity = client.KnownObjects[entity.NetworkID] as Entity;
             Assert.IsNotNull(clientEntity, "Client entity should not be null and should have been communicated.");
             Assert.IsTrue(clientEntity.HasComponent<DataStoreComponent>());
             Assert.AreEqual("hello", clientEntity.GetComponent<DataStoreComponent>().message, "The data store component should have the message set.");
-			Assert.AreEqual(55, clientEntity.GetComponent<DataStoreComponent>().number, "The data store component should have the number set.");
-			Assert.IsTrue(clientEntity.GetComponent<DataStoreComponent>().boolean, "The data store component should have the boolean set.");
-		}
+            Assert.AreEqual(55, clientEntity.GetComponent<DataStoreComponent>().number, "The data store component should have the number set.");
+            Assert.IsTrue(clientEntity.GetComponent<DataStoreComponent>().boolean, "The data store component should have the boolean set.");
+        }
 
         [TestMethod]
-        public void TestComponentAdded()
+        public void TestNetworkComponentInitialisation()
         {
             // Setup
             LocalServer localHost = new LocalServer();
             NetworkManager server = new NetworkManager(localHost);
             NetworkManager client = new NetworkManager(localHost.Connect());
-            server.onException += e =>
-            {
-                Assert.Fail(e.ToString());
-            };
-            client.onException += e =>
-            {
-                Assert.Fail(e.ToString());
-            };
             Instance serverInstance = new Instance(server);
             Instance clientInstance = new Instance(client);
             InitialisingComponent.addCount = 0;

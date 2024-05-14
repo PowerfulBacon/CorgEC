@@ -23,11 +23,6 @@ namespace Assets.Code.Networking.Communication.Packets
     {
 
         /// <summary>
-        /// How much network delay are we simulating?
-        /// </summary>
-        public static int? simulatedDelay = 200;
-
-        /// <summary>
         /// Security flags set on this packet.
         /// </summary>
         [NetIgnore]
@@ -82,13 +77,13 @@ namespace Assets.Code.Networking.Communication.Packets
                 return;
             // Alright, let's handle this
             // TODO Handle getting the transmission time from the server and passing it here for prediction
-            if (simulatedDelay == null)
+            if (NetworkManager.simulatedDelay == null)
             {
-                Task.Run(() => packet.Recieve(localNetworkManager, sender, (simulatedDelay ?? 0) / 1000.0));
+                packet.Recieve(localNetworkManager, sender, (NetworkManager.simulatedDelay ?? 0) / 1000.0);
             }
             else
             {
-                Task.Delay(simulatedDelay.Value).ContinueWith(_ => packet.Recieve(localNetworkManager, sender, (simulatedDelay ?? 0) / 1000.0), TaskContinuationOptions.ExecuteSynchronously);
+                Task.Delay(NetworkManager.simulatedDelay.Value).ContinueWith(_ => packet.Recieve(localNetworkManager, sender, (NetworkManager.simulatedDelay ?? 0) / 1000.0), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
 

@@ -31,7 +31,7 @@ namespace Assets.Code.Networking.Serialisation
         /// Read this object from the provided binary reader.
         /// </summary>
         /// <param name="reader"></param>
-        void Deserialise(INetworkInterface sender, BinaryReader reader);
+        void Deserialise(INetworkInterface sender, INetworkObjectTracker localObjects, BinaryReader reader);
 
     }
 }

@@ -32,6 +32,11 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
 
         public LocalNetworkInterface LoopbackInterface { get; }
 
+        /// <summary>
+        /// How much network delay are we simulating?
+        /// </summary>
+        public static int? simulatedDelay = 200;
+
         public NetworkManager()
         {
             IsHost = true;
@@ -100,7 +105,7 @@ namespace Assets.Code.Networking.Communication.ApplicationLayer
                             // Critical exception
                             Console.Error.WriteLine($"Failed to parse packet type {currentPacket?.GetType().Name ?? "N/A"}\n{string.Join(",", bytes.Skip(start).Take(length))}\n{e}");
                             onException?.Invoke(e);
-                            return;
+                            throw;
                         }
                     }
                 }
