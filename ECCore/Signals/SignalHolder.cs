@@ -25,7 +25,7 @@ namespace ECSCore.Signals
 
         #region Signal Contexts
 
-        private Dictionary<Type, object> signalContexts = new Dictionary<Type, object>();
+        protected Dictionary<Type, object> signalContexts = new Dictionary<Type, object>();
 
 		public SignalContext<TSignal> GetSignalContext<TSignal>()
 			where TSignal : Signal<TSignal>

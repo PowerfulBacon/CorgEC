@@ -442,6 +442,7 @@ public sealed partial class Entity : SignalHolder, IEnumerable<Entity>, INetwork
 
     public void Deserialise(INetworkInterface sender, INetworkObjectTracker localObjects, BinaryReader reader)
     {
+		signalContexts = new Dictionary<Type, object>();
 		Initialized = reader.ReadBoolean();
 		Destroyed = reader.ReadBoolean();
 		Location = (Entity)SerialisationHelper.Deserialise(sender, localObjects, typeof(Entity), reader);

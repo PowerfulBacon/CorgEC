@@ -28,7 +28,7 @@ public abstract class Signal<TSignal> : Packet<TSignal>
 
     protected override void Recieve(NetworkManager localNetworkManager, INetworkInterface sender, double sendTime)
     {
-        // TODO: Add source handling
+        // TODO: Verify that this signal was allowed to be raised by the person sending the message
         targetEntity.GetSignalContext<TSignal>().Raise((TSignal)this);
     }
 

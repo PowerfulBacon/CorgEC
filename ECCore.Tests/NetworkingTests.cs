@@ -83,7 +83,26 @@ namespace ECCore.Tests
             Assert.IsTrue(EventTestComponent.serverToClient);
         }
 
-    }
+		[TestMethod]
+		public void TestSignal_ClientToServer()
+		{
+			// Setup
+			EventTestComponent.Reset();
+			LocalServer localHost = new LocalServer();
+			NetworkManager server = new NetworkManager(localHost);
+			NetworkManager client = new NetworkManager(localHost.Connect());
+			Instance serverInstance = new Instance(server);
+			Instance clientInstance = new Instance(client);
+			// Perform Functions
+			var serverEntity = serverInstance.Create(entity => {
+				entity.TryAddComponent(new EventTestComponent());
+			});
+            (client.KnownObjects[serverEntity.NetworkID] as Entity).GetSignalContext<TestSignal>().Raise(new TestSignal());
+			// Test Results
+			Assert.IsTrue(EventTestComponent.clientToServer);
+		}
+
+	}
 
     public class InitialisingComponent : Component<InitialisingComponent>
     {

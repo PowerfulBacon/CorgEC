@@ -8,8 +8,31 @@ namespace ECCore.Tests
     [TestClass]
     public class ComponentTests
     {
-        [TestMethod]
-        public void TestComponentAdding()
+
+		[TestMethod]
+		public void TestComponentAdding()
+		{
+			Instance instance = new Instance();
+			Entity entity = instance.Create(entity => {
+				entity.TryAddComponent(new TestComponent());
+			});
+            Assert.IsTrue(entity.HasComponent<TestComponent>());
+		}
+
+		[TestMethod]
+		public void TestComponentRemoval()
+		{
+			Instance instance = new Instance();
+			Entity entity = instance.Create(entity => {
+				entity.TryAddComponent(new TestComponent());
+			});
+			Assert.IsTrue(entity.HasComponent<TestComponent>());
+            entity.RemoveComponent(entity.GetComponent<TestComponent>());
+            Assert.IsFalse(entity.HasComponent<TestComponent>());
+		}
+
+		[TestMethod]
+        public void TestSignalRaising()
         {
             Instance instance = new Instance();
             Entity entity = instance.Create(entity => {
@@ -19,7 +42,20 @@ namespace ECCore.Tests
             entity.GetSignalContext<TestSignal>().Raise(new TestSignal());
             Assert.IsTrue(TestComponent.accept);
         }
-    }
+
+		[TestMethod]
+		public void TestSignalRaisingOnRemovedComponent()
+		{
+			Instance instance = new Instance();
+			Entity entity = instance.Create(entity => {
+				entity.TryAddComponent(new TestComponent());
+			});
+			TestComponent.accept = false;
+			entity.RemoveComponent(entity.GetComponent<TestComponent>());
+			entity.GetSignalContext<TestSignal>().Raise(new TestSignal());
+			Assert.IsFalse(TestComponent.accept);
+		}
+	}
 
     public class TestComponent : Component<TestComponent>
     {
