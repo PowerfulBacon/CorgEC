@@ -104,17 +104,3 @@ If you are going to be raising a signal a lot, caching the signal context will p
 // Raise a signal
 target.GetSignalContext<ExampleSignal>().Raise(new ExampleSignal())
 ```
-
-# Entities
-
-## Creating an entity
-
-Creating an entity is done through a wrapper to ensure that all components are initialised at the same time, allowing for components to depend on each other.
-
-```cs
-Entity.Create(entity =>
-{
-    // Add components here
-    entity.AddComponent(new ExampleComponent());
-});
-```
