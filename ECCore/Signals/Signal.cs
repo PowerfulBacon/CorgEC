@@ -1,7 +1,11 @@
 
-public abstract class Signal
+
+namespace ECCore.Signals
 {
+	public abstract class Signal
+	{
 
 
 
+	}
 }

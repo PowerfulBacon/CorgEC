@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ECSCore.Signals
+namespace ECCore.Signals
 {
 	public class SignalHolder
 	{
@@ -16,9 +13,12 @@ namespace ECSCore.Signals
 		public SignalContext<TSignal> GetSignalContext<TSignal>()
 			where TSignal : Signal
 		{
-			if (signalContexts.TryGetValue(typeof(TSignal), out var result))
+			if (signalContexts.TryGetValue(typeof(TSignal), out object result))
+			{
 				return (SignalContext<TSignal>)result;
-			SignalContext<TSignal> signalContext = new SignalContext<TSignal>();
+			}
+
+			var signalContext = new SignalContext<TSignal>();
 			signalContexts.Add(typeof(TSignal), signalContext);
 			return signalContext;
 		}
