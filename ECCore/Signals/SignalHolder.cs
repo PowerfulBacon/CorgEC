@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ECCore.Signals
 {
@@ -13,7 +14,7 @@ namespace ECCore.Signals
 		public SignalContext<TSignal> GetSignalContext<TSignal>()
 			where TSignal : Signal
 		{
-			if (signalContexts.TryGetValue(typeof(TSignal), out object result))
+			if (signalContexts.TryGetValue(typeof(TSignal), out var result))
 			{
 				return (SignalContext<TSignal>)result;
 			}
@@ -21,6 +22,30 @@ namespace ECCore.Signals
 			var signalContext = new SignalContext<TSignal>();
 			signalContexts.Add(typeof(TSignal), signalContext);
 			return signalContext;
+		}
+
+		/// <summary>
+		/// Raise a signal against the entity, going through the signal context
+		/// implicitly.
+		/// </summary>
+		/// <typeparam name="TSignal">
+		/// The type of the signal being raised against the target.
+		/// </typeparam>
+		/// <param name="signal">
+		/// The signal being raised against the target.
+		/// </param>
+		/// <returns>
+		/// Returns a task that represents the execution of the signal, as some
+		/// handlers may take time to execute.
+		/// </returns>
+		public Task RaiseSignal<TSignal>(TSignal signal)
+			where TSignal : Signal
+		{
+			if (signalContexts.TryGetValue(typeof(TSignal), out var value))
+			{
+				return ((SignalContext<TSignal>)value).Raise(signal);
+			}
+			return Task.CompletedTask;
 		}
 
 		#endregion
