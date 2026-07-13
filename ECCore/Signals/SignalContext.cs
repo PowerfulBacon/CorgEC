@@ -14,11 +14,11 @@ namespace ECCore.Signals
 	{
 
 #if NET6_0_OR_GREATER
-		public Func<TSignal, Task>? onRaisedAsync;
-		public Action<TSignal>? onRaised;
+		public event Func<TSignal, Task>? onRaisedAsync;
+		public event Action<TSignal>? onRaised;
 #else
-		public Func<TSignal, Task> onRaisedAsync;
-		public Action<TSignal> onRaised;
+		public event Func<TSignal, Task> onRaisedAsync;
+		public event Action<TSignal> onRaised;
 #endif
 
 		public Task Raise(TSignal signal)
