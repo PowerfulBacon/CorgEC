@@ -98,9 +98,17 @@ target.GetSignalContext<ExampleSignal>().Register(signal =>
 
 ## Raising a signal
 
-If you are going to be raising a signal a lot, caching the signal context will provide the best performance.
+You can raise a signal against an entity by calling RaiseSignal.
 
 ```cs
 // Raise a signal
-target.GetSignalContext<ExampleSignal>().Raise(new ExampleSignal())
+target.RaiseSignal(new ExampleSignal());
 ```
+
+You can call `GetSignalContext<TSignal>` if you want direct access to the signal's context object. This lets you raise a signal without performing a dictionary lookup, which may be faster in some specific high-performance scenarios but is generally not necessary.
+
+```cs
+// Raise a signal
+target.GetSignalContext<ExampleSignal>().Raise(new ExampleSignal());
+```
+
