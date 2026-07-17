@@ -10,54 +10,54 @@ namespace ECCore.Components
 
 		private SignalGroup componentGroup = new SignalGroup();
 
-		protected void Register<TSignal>(Action<TSignal> onSignalRaised)
+		protected void Register<TSignal>(Action<TParent, TSignal> onSignalRaised)
 		{
 			if (Parent == null)
 			{
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			}
 
-			SignalContext<TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
+			SignalContext<TParent, TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
 			signalContext.Register(onSignalRaised);
 		}
 
-		protected void Register<TSignal>(Func<TSignal, Task> onSignalRaised)
+		protected void Register<TSignal>(Func<TParent, TSignal, Task> onSignalRaised)
 		{
 			if (Parent == null)
 			{
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			}
 
-			SignalContext<TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
+			SignalContext<TParent, TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
 			signalContext.Register(onSignalRaised);
 		}
 
-		protected void Unregister<TSignal>(Action<TSignal> onSignalRaised)
+		protected void Unregister<TSignal>(Action<TParent, TSignal> onSignalRaised)
 		{
 			if (Parent == null)
 			{
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			}
 
-			SignalContext<TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
+			SignalContext<TParent, TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
 			signalContext.Unregister(onSignalRaised);
 		}
 
-		protected void Unregister<TSignal>(Func<TSignal, Task> onSignalRaised)
+		protected void Unregister<TSignal>(Func<TParent, TSignal, Task> onSignalRaised)
 		{
 			if (Parent == null)
 			{
 				throw new InvalidOperationException("Cannot register signals when the parent of a component has not been assigned.");
 			}
 
-			SignalContext<TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
+			SignalContext<TParent, TSignal> signalContext = Parent.GetSignalContext<TSignal>(componentGroup);
 			signalContext.Unregister(onSignalRaised);
 		}
 
 		/// <summary>
 		/// Get the signal raise context for our parent entity for the signal that we are trying to raise
 		/// </summary>
-		public SignalContext<TSignal> GetSignalRaiseContext<TSignal>()
+		public SignalContext<TParent, TSignal> GetSignalRaiseContext<TSignal>()
 		{
 			if (Parent == null)
 			{

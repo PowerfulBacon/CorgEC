@@ -1,11 +1,17 @@
 ﻿namespace ECCore.Signals
 {
 
-	internal class LinkedSignalContextList<TSignal>
+	internal class LinkedSignalContextList<TContext, TSignal>
 	{
 
-		internal SignalContext<TSignal> head;
-		internal SignalContext<TSignal> tail;
+		internal TContext contextReference;
 
+		internal SignalContext<TContext, TSignal> head;
+		internal SignalContext<TContext, TSignal> tail;
+
+		public LinkedSignalContextList(TContext contextReference)
+		{
+			this.contextReference = contextReference;
+		}
 	}
 }

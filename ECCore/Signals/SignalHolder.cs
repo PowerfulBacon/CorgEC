@@ -4,7 +4,15 @@ using System.Threading.Tasks;
 
 namespace ECCore.Signals
 {
-	public class SignalHolder
+
+	/// <summary>
+	/// Simple signal holder that only includes itself as context
+	/// </summary>
+	public sealed class SignalHolder : SignalHolder<SignalHolder>
+	{ }
+
+	public class SignalHolder<TEntityType> : IDisposable
+		where TEntityType : SignalHolder<TEntityType>
 	{
 
 		private struct SignalTypeAndGroup
@@ -40,19 +48,19 @@ namespace ECCore.Signals
 
 		private Dictionary<SignalTypeAndGroup, WeakReference> signalContextLookup = new Dictionary<SignalTypeAndGroup, WeakReference>();
 
-		private LinkedSignalContextList<TSignal> GetSignalContextList<TSignal>(SignalGroup group)
+		private LinkedSignalContextList<TEntityType, TSignal> GetSignalContextList<TSignal>(SignalGroup group)
 		{
 			if (signalContextLists.TryGetValue(typeof(TSignal), out var result))
 			{
-				return (LinkedSignalContextList<TSignal>)result;
+				return (LinkedSignalContextList<TEntityType, TSignal>)result;
 			}
 
-			var signalContext = new LinkedSignalContextList<TSignal>();
+			var signalContext = new LinkedSignalContextList<TEntityType, TSignal>((TEntityType)this);
 			signalContextLists.Add(typeof(TSignal), signalContext);
 			return signalContext;
 		}
 
-		public SignalContext<TSignal> GetSignalContext<TSignal>(SignalGroup group)
+		public SignalContext<TEntityType, TSignal> GetSignalContext<TSignal>(SignalGroup group)
 		{
 			var cacheKey = new SignalTypeAndGroup(group, typeof(TSignal));
 			// Fast cache access
@@ -62,15 +70,63 @@ namespace ECCore.Signals
 				var cachedTarget = cachedValue.Target;
 				if (cachedTarget != null)
 				{
-					return (SignalContext<TSignal>)cachedTarget;
+					return (SignalContext<TEntityType, TSignal>)cachedTarget;
 				}
 			}
 			// Create new signal
 			var linkedList = GetSignalContextList<TSignal>(group);
 			// Create the new signal context
-			var createdSignalContext = new SignalContext<TSignal>(linkedList, group);
+			var createdSignalContext = new SignalContext<TEntityType, TSignal>(linkedList, group);
 			signalContextLookup[cacheKey] = new WeakReference(createdSignalContext);
 			return createdSignalContext;
+		}
+
+		/// <summary>
+		/// Register a signal against this signal holder, the onRaised delegate will be called
+		/// when that specific signal is raised against this signal holder.
+		/// </summary>
+		/// <typeparam name="TSignal"></typeparam>
+		/// <param name="group"></param>
+		/// <param name="onRaisedAsync"></param>
+		public void RegisterSignal<TSignal>(SignalGroup group, Func<TEntityType, TSignal, Task> onRaisedAsync)
+		{
+			GetSignalContext<TSignal>(group).Register(onRaisedAsync);
+		}
+
+		/// <summary>
+		/// Register a signal against this signal holder, the onRaised delegate will be called
+		/// when that specific signal is raised against this signal holder.
+		/// </summary>
+		/// <typeparam name="TSignal"></typeparam>
+		/// <param name="group"></param>
+		/// <param name="onRaised"></param>
+		public void RegisterSignal<TSignal>(SignalGroup group, Action<TEntityType, TSignal> onRaised)
+		{
+			GetSignalContext<TSignal>(group).Register(onRaised);
+		}
+
+		/// <summary>
+		/// Removes a registered signal from this holder, the provided delegate will no longer
+		/// be called when TSignal is raised against this entity.
+		/// </summary>
+		/// <typeparam name="TSignal"></typeparam>
+		/// <param name="group"></param>
+		/// <param name="onRaisedAsync"></param>
+		public void UnregisterSignal<TSignal>(SignalGroup group, Func<TEntityType, TSignal, Task> onRaisedAsync)
+		{
+			GetSignalContext<TSignal>(group).Unregister(onRaisedAsync);
+		}
+
+		/// <summary>
+		/// Removes a registered signal from this holder, the provided delegate will no longer
+		/// be called when TSignal is raised against this entity.
+		/// </summary>
+		/// <typeparam name="TSignal"></typeparam>
+		/// <param name="group"></param>
+		/// <param name="onRaised"></param>
+		public void UnregisterSignal<TSignal>(SignalGroup group, Action<TEntityType, TSignal> onRaised)
+		{
+			GetSignalContext<TSignal>(group).Unregister(onRaised);
 		}
 
 		/// <summary>
@@ -91,7 +147,7 @@ namespace ECCore.Signals
 		{
 			if (signalContextLists.TryGetValue(typeof(TSignal), out var value))
 			{
-				var linkedList = ((LinkedSignalContextList<TSignal>)value);
+				var linkedList = ((LinkedSignalContextList<TEntityType, TSignal>)value);
 				var current = linkedList.head;
 				while (current != null)
 				{
@@ -100,6 +156,23 @@ namespace ECCore.Signals
 				}
 			}
 			return Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// Removes all signals attached to this holder, which may have been registered from
+		/// another entity which would maintain a reference and keep this holder alive.
+		/// </summary>
+		public void Dispose()
+		{
+			foreach (var reference in signalContextLookup.Values)
+			{
+				var referenceTarget = reference.Target;
+				if (referenceTarget != null)
+				{
+					var context = (ISignalContext)referenceTarget;
+					context.UnregisterAll();
+				}
+			}
 		}
 
 		#endregion

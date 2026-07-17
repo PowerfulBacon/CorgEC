@@ -10,14 +10,15 @@ namespace ECCore.Signals
 	/// Connects a specific signal type to a specific entity.
 	/// Per-entity singleton
 	/// </summary>
-	/// <typeparam name="TSignal"></typeparam>
-	public class SignalContext<TSignal> : ISignalContext, ISignalInternalContext
+	/// <typeparam name="TContext">The type that this context exists against</typeparam>
+	/// <typeparam name="TSignal">The signal that we will be accepting</typeparam>
+	public class SignalContext<TContext, TSignal> : ISignalContext, ISignalInternalContext
 	{
 
 		/// <summary>
 		/// The list that we need to belong to
 		/// </summary>
-		private LinkedSignalContextList<TSignal> parentList;
+		private LinkedSignalContextList<TContext, TSignal> parentList;
 
 		/// <summary>
 		/// The group that we belong to
@@ -27,16 +28,16 @@ namespace ECCore.Signals
 		/// <summary>
 		/// The next signal context in the linked list
 		/// </summary>
-		internal SignalContext<TSignal> next;
+		internal SignalContext<TContext, TSignal> next;
 
 		/// <summary>
 		/// Have we been registered?
 		/// </summary>
 		private bool registered = false;
 
-		private List<Action<TSignal>> baseActions = null;
+		private List<Action<TContext, TSignal>> baseActions = null;
 
-		private List<Func<TSignal, Task>> asyncActions = null;
+		private List<Func<TContext, TSignal, Task>> asyncActions = null;
 
 		/// <summary>
 		/// Returns true if we have any asynchronous actions that may require awaiting on the
@@ -45,11 +46,29 @@ namespace ECCore.Signals
 		public bool IsAsynchronous => asyncActions != null;
 
 		/// <summary>
+		/// Add/Remove signals associated with the synchronous raised event.
+		/// </summary>
+		public event Action<TContext, TSignal> onRaised
+		{
+			add => Register(value);
+			remove => Unregister(value);
+		}
+
+		/// <summary>
+		/// Add/Remove signals associated with the asynchronous raised event.
+		/// </summary>
+		public event Action<TContext, TSignal> onRaisedAsync
+		{
+			add => Register(value);
+			remove => Unregister(value);
+		}
+
+		/// <summary>
 		/// Create a signal context
 		/// </summary>
 		/// <param name="parentList"></param>
 		/// <param name="group"></param>
-		internal SignalContext(LinkedSignalContextList<TSignal> parentList, SignalGroup group)
+		internal SignalContext(LinkedSignalContextList<TContext, TSignal> parentList, SignalGroup group)
 		{
 			this.parentList = parentList;
 			this.group = group;
@@ -63,14 +82,14 @@ namespace ECCore.Signals
 				{
 					if (baseActions.Count >= i)
 					{
-						baseActions[i].Invoke(signal);
+						baseActions[i].Invoke(parentList.contextReference, signal);
 					}
 				}
 			}
 			// Execute asynchronous actions
 			if (asyncActions != null)
 			{
-				return Task.WhenAll(asyncActions.Select(x => x(signal)).ToArray());
+				return Task.WhenAll(asyncActions.Select(x => x(parentList.contextReference, signal)).ToArray());
 			}
 			// Execute synchronousely
 			return Task.CompletedTask;
@@ -109,7 +128,7 @@ namespace ECCore.Signals
 			group.signals.Remove(this);
 		}
 
-		public void Unregister(Func<TSignal, Task> action)
+		public void Unregister(Func<TContext, TSignal, Task> action)
 		{
 			if (asyncActions == null)
 			{
@@ -130,7 +149,7 @@ namespace ECCore.Signals
 			}
 		}
 
-		public void Unregister(Action<TSignal> action)
+		public void Unregister(Action<TContext, TSignal> action)
 		{
 			if (baseActions == null)
 			{
@@ -151,22 +170,22 @@ namespace ECCore.Signals
 			}
 		}
 
-		public void Register(Func<TSignal, Task> action)
+		public void Register(Func<TContext, TSignal, Task> action)
 		{
 			JoinListIfNecessary();
 			if (asyncActions == null)
 			{
-				asyncActions = new List<Func<TSignal, Task>>();
+				asyncActions = new List<Func<TContext, TSignal, Task>>();
 			}
 			asyncActions.Add(action);
 		}
 
-		public void Register(Action<TSignal> action)
+		public void Register(Action<TContext, TSignal> action)
 		{
 			JoinListIfNecessary();
 			if (baseActions == null)
 			{
-				baseActions = new List<Action<TSignal>>();
+				baseActions = new List<Action<TContext, TSignal>>();
 			}
 			baseActions.Add(action);
 		}
