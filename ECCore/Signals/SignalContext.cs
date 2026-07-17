@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,10 +26,37 @@ namespace ECCore.Signals
 		/// </summary>
 		internal SignalGroup group;
 
+		private SignalContext<TContext, TSignal> _next;
+
 		/// <summary>
 		/// The next signal context in the linked list
 		/// </summary>
-		internal SignalContext<TContext, TSignal> next;
+		internal SignalContext<TContext, TSignal> next
+		{
+			get => _next;
+			set
+			{
+				Debug.Assert(value != this, "Assertion violated, an infinite loop has been created.");
+				Debug.Assert(_previous != value || value == null, "Previous should not equal next, that creates an infinite loop");
+				_next = value;
+			}
+		}
+
+		private SignalContext<TContext, TSignal> _previous;
+
+		/// <summary>
+		/// The next signal context in the linked list
+		/// </summary>
+		internal SignalContext<TContext, TSignal> previous
+		{
+			get => _previous;
+			set
+			{
+				Debug.Assert(value != this, "Assertion violated, an infinite loop has been created.");
+				Debug.Assert(next != value || value == null, "Previous should not equal next, that creates an infinite loop");
+				_previous = value;
+			}
+		}
 
 		/// <summary>
 		/// Have we been registered?
@@ -101,19 +129,25 @@ namespace ECCore.Signals
 			baseActions = null;
 			if (registered)
 			{
+				if (previous != null)
+				{
+					previous.next = next;
+				}
+				if (next != null)
+				{
+					next.previous = previous;
+				}
 				if (parentList.head == this)
 				{
 					parentList.head = next;
 				}
 				if (parentList.tail == this)
 				{
-					parentList.tail = parentList.head;
-					// Recurse until we reach the new final element
-					while (parentList.tail?.next != null)
-					{
-						parentList.tail = parentList.tail.next;
-					}
+					parentList.tail = previous;
 				}
+				next = null;
+				previous = null;
+				Debug.Assert(!(parentList.tail != null && parentList.head == null), "If tail is null then head should always be null.");
 				registered = false;
 			}
 		}
@@ -138,7 +172,7 @@ namespace ECCore.Signals
 			// Clear unnecessary allocations
 			if (asyncActions.Count == 0)
 			{
-				if (baseActions.Count == 0)
+				if (baseActions == null || baseActions.Count == 0)
 				{
 					UnregisterAll();
 				}
@@ -159,7 +193,7 @@ namespace ECCore.Signals
 			// Clear unnecessary allocations
 			if (baseActions.Count == 0)
 			{
-				if (asyncActions.Count == 0)
+				if (asyncActions == null || asyncActions.Count == 0)
 				{
 					UnregisterAll();
 				}
@@ -198,6 +232,7 @@ namespace ECCore.Signals
 				if (parentList.tail != null)
 				{
 					parentList.tail.next = this;
+					previous = parentList.tail;
 				}
 				parentList.tail = this;
 				if (parentList.head == null)
