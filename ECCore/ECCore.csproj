@@ -3,10 +3,18 @@
   <PropertyGroup>
     <TargetFrameworks>net10.0;net8.0;net6.0;netstandard2.0</TargetFrameworks>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyVersion>2.1.1</AssemblyVersion>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
     <FileVersion>3.0.0</FileVersion>
     <Version>3.0.0</Version>
     <Title>CorgEC</Title>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/PowerfulBacon/CorgEC</RepositoryUrl>
+    <PackageTags>EC;Game;Game Development;Entity;Component;Signal;Event;Raise;Register;Unregister</PackageTags>
+    <Copyright>https://github.com/PowerfulBacon/CorgEC</Copyright>
+    <Description> A C# library for easy management of registering and raising signals against entities with an included Entity/Component framework. </Description>
+    <Authors>PowerfulBacon</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
@@ -30,7 +38,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Link="README.md" />
+    <None Include="..\README.md" Link="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -100,11 +100,11 @@ namespace ECCore.Entities
 		}
 
 #if NET6_0_OR_GREATER
-	public bool TryGetComponent<T>(out T? component)
+		public bool TryGetComponent<T>(out T? component)
 #else
 		public bool TryGetComponent<T>(out T component)
 #endif
-			where T : Component<TParentType>
+				where T : Component<TParentType>
 		{
 			if (Destroyed)
 			{
@@ -130,15 +130,15 @@ namespace ECCore.Entities
 		}
 
 #if NET6_0_OR_GREATER
-	public bool TryGetComponent(Type componentType, out Component<TParentType>? component, bool allowSubtypes = true)
-	{
-		if (Destroyed)
-			throw new NullReferenceException("Attempting to access a destroyed entity.");
-		component = components
-			.Where(x => allowSubtypes ? componentType.IsAssignableFrom(x.GetType()) : x.GetType() == componentType)
-			.SingleOrDefault();
-		return component != default;
-	}
+		public bool TryGetComponent(Type componentType, out Component<TParentType>? component, bool allowSubtypes = true)
+		{
+			if (Destroyed)
+				throw new NullReferenceException("Attempting to access a destroyed entity.");
+			component = components
+				.Where(x => allowSubtypes ? componentType.IsAssignableFrom(x.GetType()) : x.GetType() == componentType)
+				.SingleOrDefault();
+			return component != default;
+		}
 #else
 		public bool TryGetComponent(Type componentType, out Component<TParentType> component, bool allowSubtypes = true)
 		{
@@ -270,36 +270,36 @@ namespace ECCore.Entities
 		}
 
 #if NET6_0_OR_GREATER
-	public static bool operator ==(ECEntity<TParentType>? entity, object? other)
-	{
-		if (entity is null)
+		public static bool operator ==(ECEntity<TParentType>? entity, object? other)
 		{
-			if (other is ECEntity<TParentType> otherEntity)
-				return otherEntity.Destroyed;
-			return other is null;
-		}
-		if (other is not ECEntity<TParentType>)
-		{
-			if (other is null && entity.Destroyed)
+			if (entity is null)
+			{
+				if (other is ECEntity<TParentType> otherEntity)
+					return otherEntity.Destroyed;
+				return other is null;
+			}
+			if (other is not ECEntity<TParentType>)
+			{
+				if (other is null && entity.Destroyed)
+					return true;
+				return false;
+			}
+			if (other is null)
+				return entity.Destroyed;
+			if (entity.Destroyed && ((ECEntity<TParentType>)other).Destroyed)
 				return true;
-			return false;
+			return entity.Equals(other);
 		}
-		if (other is null)
-			return entity.Destroyed;
-		if (entity.Destroyed && ((ECEntity<TParentType>)other).Destroyed)
-			return true;
-		return entity.Equals(other);
-	}
 
-	public static bool operator !=(ECEntity<TParentType>? entity, object? other)
-	{
-		return !(entity == other);
-	}
+		public static bool operator !=(ECEntity<TParentType>? entity, object? other)
+		{
+			return !(entity == other);
+		}
 
-	public override bool Equals(object? obj)
-	{
-		return base.Equals(obj);
-	}
+		public override bool Equals(object? obj)
+		{
+			return base.Equals(obj);
+		}
 #else
 		public static bool operator ==(ECEntity<TParentType> entity, object other)
 		{
