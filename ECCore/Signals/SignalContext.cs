@@ -195,7 +195,10 @@ namespace ECCore.Signals
 			if (!registered)
 			{
 				// Join linked raising list
-				parentList.tail.next = this;
+				if (parentList.tail != null)
+				{
+					parentList.tail.next = this;
+				}
 				parentList.tail = this;
 				if (parentList.head == null)
 				{

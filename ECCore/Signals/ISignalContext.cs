@@ -1,4 +1,4 @@
-﻿namespace ECCore.Signals
+namespace ECCore.Signals
 {
 	public interface ISignalContext
 	{
