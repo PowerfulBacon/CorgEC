@@ -13,7 +13,7 @@ namespace ECCore.Entities
 	/// seperated from their representation in Unity.
 	/// </summary>
 	/// <typeparam name="TParentType">Should be the type of the class that inherits this type.</typeparam>
-	public abstract class ECEntity<TParentType> : SignalHolder
+	public abstract class ECEntity<TParentType> : SignalHolder<TParentType>
 		where TParentType : ECEntity<TParentType>
 	{
 
@@ -33,6 +33,8 @@ namespace ECCore.Entities
 			RemoveComponents();
 			// Destroy the entity
 			Destroyed = true;
+			// Calls the base signal holder dispose, which removes all registered signals
+			Dispose();
 		}
 
 		#region Components
@@ -188,6 +190,13 @@ namespace ECCore.Entities
 			}
 		}
 
+		/// <summary>
+		/// Removes a component from an entity, note that this will also unregister
+		/// all signals from the component.
+		/// </summary>
+		/// <param name="component"></param>
+		/// <returns></returns>
+		/// <exception cref="NullReferenceException"></exception>
 		public bool RemoveComponent(Component<TParentType> component)
 		{
 			if (Destroyed)
