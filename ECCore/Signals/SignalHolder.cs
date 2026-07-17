@@ -7,21 +7,70 @@ namespace ECCore.Signals
 	public class SignalHolder
 	{
 
-		#region Signal Contexts
-
-		private Dictionary<Type, object> signalContexts = new Dictionary<Type, object>();
-
-		public SignalContext<TSignal> GetSignalContext<TSignal>()
-			where TSignal : Signal
+		private struct SignalTypeAndGroup
 		{
-			if (signalContexts.TryGetValue(typeof(TSignal), out var result))
+			private SignalGroup group;
+			private Type type;
+
+			public SignalTypeAndGroup(SignalGroup group, Type type)
 			{
-				return (SignalContext<TSignal>)result;
+				this.group = group;
+				this.type = type;
 			}
 
-			var signalContext = new SignalContext<TSignal>();
-			signalContexts.Add(typeof(TSignal), signalContext);
+			public override bool Equals(object obj)
+			{
+				return obj is SignalTypeAndGroup group &&
+					   EqualityComparer<SignalGroup>.Default.Equals(this.group, group.group) &&
+					   EqualityComparer<Type>.Default.Equals(type, group.type);
+			}
+
+			public override int GetHashCode()
+			{
+				int hashCode = 2104381881;
+				hashCode = hashCode * -1521134295 + EqualityComparer<SignalGroup>.Default.GetHashCode(group);
+				hashCode = hashCode * -1521134295 + EqualityComparer<Type>.Default.GetHashCode(type);
+				return hashCode;
+			}
+		}
+
+		#region Signal Contexts
+
+		private Dictionary<Type, object> signalContextLists = new Dictionary<Type, object>();
+
+		private Dictionary<SignalTypeAndGroup, WeakReference> signalContextLookup = new Dictionary<SignalTypeAndGroup, WeakReference>();
+
+		private LinkedSignalContextList<TSignal> GetSignalContextList<TSignal>(SignalGroup group)
+		{
+			if (signalContextLists.TryGetValue(typeof(TSignal), out var result))
+			{
+				return (LinkedSignalContextList<TSignal>)result;
+			}
+
+			var signalContext = new LinkedSignalContextList<TSignal>();
+			signalContextLists.Add(typeof(TSignal), signalContext);
 			return signalContext;
+		}
+
+		public SignalContext<TSignal> GetSignalContext<TSignal>(SignalGroup group)
+		{
+			var cacheKey = new SignalTypeAndGroup(group, typeof(TSignal));
+			// Fast cache access
+			if (signalContextLookup.TryGetValue(cacheKey, out var cachedValue))
+			{
+				// Object can no longer be garbage collected once we access it
+				var cachedTarget = cachedValue.Target;
+				if (cachedTarget != null)
+				{
+					return (SignalContext<TSignal>)cachedTarget;
+				}
+			}
+			// Create new signal
+			var linkedList = GetSignalContextList<TSignal>(group);
+			// Create the new signal context
+			var createdSignalContext = new SignalContext<TSignal>(linkedList, group);
+			signalContextLookup[cacheKey] = new WeakReference(createdSignalContext);
+			return createdSignalContext;
 		}
 
 		/// <summary>
@@ -39,11 +88,16 @@ namespace ECCore.Signals
 		/// handlers may take time to execute.
 		/// </returns>
 		public Task RaiseSignal<TSignal>(TSignal signal)
-			where TSignal : Signal
 		{
-			if (signalContexts.TryGetValue(typeof(TSignal), out var value))
+			if (signalContextLists.TryGetValue(typeof(TSignal), out var value))
 			{
-				return ((SignalContext<TSignal>)value).Raise(signal);
+				var linkedList = ((LinkedSignalContextList<TSignal>)value);
+				var current = linkedList.head;
+				while (current != null)
+				{
+					current.Raise(signal);
+					current = current.next;
+				}
 			}
 			return Task.CompletedTask;
 		}

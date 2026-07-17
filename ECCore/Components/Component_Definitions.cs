@@ -20,6 +20,8 @@ namespace ECCore.Components
 
 		internal void Remove()
 		{
+			// Remove all signals associated with this component
+			componentGroup.ClearSignals();
 			// Unregister all signals
 			// Call component removed
 			ComponentRemoved();

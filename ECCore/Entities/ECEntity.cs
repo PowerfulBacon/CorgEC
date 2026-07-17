@@ -188,6 +188,13 @@ namespace ECCore.Entities
 			}
 		}
 
+		/// <summary>
+		/// Removes a component from an entity, note that this will also unregister
+		/// all signals from the component.
+		/// </summary>
+		/// <param name="component"></param>
+		/// <returns></returns>
+		/// <exception cref="NullReferenceException"></exception>
 		public bool RemoveComponent(Component<TParentType> component)
 		{
 			if (Destroyed)
